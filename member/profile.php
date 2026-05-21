@@ -1,0 +1,113 @@
+<?php
+// member/profile.php
+session_start();
+require_once __DIR__ . '/../config/database.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../auth/login.php");
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+$success = '';
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $phone = trim($_POST['phone'] ?? '');
+    $profile_image = $_POST['current_image'] ?? 'default.png';
+
+    if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+        $tmp_name = $_FILES['profile_image']['tmp_name'];
+        $ext = strtolower(pathinfo(basename($_FILES['profile_image']['name']), PATHINFO_EXTENSION));
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif'])) {
+            $new_name = $user_id . '_' . time() . '.' . $ext;
+            $upload_dir = __DIR__ . '/../uploads/profiles/';
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+            if (move_uploaded_file($tmp_name, $upload_dir . $new_name)) { $profile_image = $new_name; }
+            else { $error = 'อัปโหลดรูปไม่สำเร็จ'; }
+        } else { $error = 'รูปแบบไฟล์ไม่รองรับ'; }
+    }
+
+    if (!$error) {
+        $stmt = $pdo->prepare("UPDATE users SET phone = ?, profile_image = ?, profile_completed = 1 WHERE id = ?");
+        if ($stmt->execute([$phone, $profile_image, $user_id])) {
+            $success = 'อัปเดตโปรไฟล์สำเร็จแล้ว!';
+            if (isset($_GET['first_login'])) { header("Location: feed.php?welcome=1"); exit; }
+        } else { $error = 'เกิดข้อผิดพลาด'; }
+    }
+}
+
+$stmt = $pdo->prepare("SELECT student_id, email, phone, profile_image, profile_completed, created_at FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch();
+
+$base_url = '../';
+require_once __DIR__ . '/../includes/header.php';
+?>
+
+<div style="max-width:550px;margin:0 auto;">
+    <div class="page-header">
+        <h2>ข้อมูลส่วนตัว</h2>
+        <p>จัดการข้อมูลและรูปโปรไฟล์ของคุณ</p>
+    </div>
+
+    <?php if(isset($_GET['first_login'])):?>
+        <div class="alert alert-success" style="text-align:center;">
+            <i class="ph-bold ph-confetti" style="font-size:1.3rem;"></i>
+            <strong>ยินดีต้อนรับสมาชิกใหม่!</strong> กรุณาตั้งค่าโปรไฟล์ก่อนเริ่มใช้งาน
+        </div>
+    <?php endif;?>
+
+    <div class="glass-card animate-in">
+        <?php if($success):?><div class="alert alert-success"><i class="ph-bold ph-check-circle"></i> <?php echo $success;?></div><?php endif;?>
+        <?php if($error):?><div class="alert alert-danger"><i class="ph-bold ph-warning-circle"></i> <?php echo htmlspecialchars($error);?></div><?php endif;?>
+
+        <form method="POST" action="profile.php<?php echo isset($_GET['first_login'])?'?first_login=1':'';?>" enctype="multipart/form-data">
+            <div style="text-align:center;margin-bottom:2rem;">
+                <?php
+                $imgPath = $user['profile_image'] !== 'default.png' ? "../uploads/profiles/".$user['profile_image'] : "https://ui-avatars.com/api/?name=".urlencode($user['student_id'])."&background=F2531C&color=fff&size=512";
+                ?>
+                <div style="position:relative;display:inline-block;">
+                    <div style="width:120px;height:120px;margin:0 auto;border-radius:32px;overflow:hidden;border:4px solid #fff;box-shadow:0 8px 24px rgba(0,0,0,.08);">
+                        <img id="avatar-preview" src="<?php echo htmlspecialchars($imgPath);?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <label for="profile_image" style="position:absolute;bottom:-8px;right:-8px;background:linear-gradient(135deg,var(--primary),#ff6b35);width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;border:3px solid #fff;box-shadow:0 4px 12px var(--primary-glow);">
+                        <i class="ph-bold ph-camera" style="font-size:1.1rem;"></i>
+                    </label>
+                    <input type="file" id="profile_image" name="profile_image" style="display:none;" accept="image/*">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label><i class="ph ph-lock"></i> รหัสนักศึกษา / อีเมล</label>
+                <div class="form-control" style="background:#f8f9fa;border-color:#e8ecf0;color:var(--text-secondary);">
+                    <?php echo htmlspecialchars($user['student_id'] . ' | ' . $user['email']); ?>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="phone"><i class="ph ph-phone"></i> เบอร์โทรศัพท์ติดต่อ</label>
+                <input type="text" id="phone" name="phone" class="form-control" value="<?php echo htmlspecialchars($user['phone']);?>" placeholder="0XXXXXXXXX">
+            </div>
+
+            <input type="hidden" name="current_image" value="<?php echo htmlspecialchars($user['profile_image']);?>">
+            <button type="submit" class="btn btn-primary w-100 mt-2"><i class="ph-bold ph-floppy-disk"></i> บันทึกข้อมูล</button>
+
+            <?php if($user['profile_completed']):?>
+                <a href="feed.php" class="btn btn-outline w-100 mt-3">กลับไปหน้าฟีด</a>
+            <?php endif;?>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('profile_image').addEventListener('change',function(){
+    if(this.files&&this.files[0]){
+        const r=new FileReader();
+        r.onload=function(e){document.getElementById('avatar-preview').src=e.target.result;};
+        r.readAsDataURL(this.files[0]);
+        if(typeof showToast==='function')showToast('เลือกรูปภาพเรียบร้อย','success');
+    }
+});
+</script>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

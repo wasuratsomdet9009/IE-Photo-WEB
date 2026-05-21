@@ -1,0 +1,222 @@
+<?php
+// member/borrow_form.php
+session_start();
+require_once __DIR__ . '/../config/database.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../auth/login.php");
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+$success = '';
+$error = '';
+
+// Get available equipments
+$stmt = $pdo->query("SELECT id, name, type FROM equipments WHERE status = 'available' ORDER BY type, name");
+$equipments = $stmt->fetchAll();
+
+// Get members for "responsible person" dropdown
+$memberStmt = $pdo->query("SELECT id, student_id, role FROM users ORDER BY role DESC, student_id ASC");
+$members = $memberStmt->fetchAll();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $item_ids = $_POST['item_ids'] ?? [];
+    $start_datetime = $_POST['start_datetime'] ?? '';
+    $end_datetime = $_POST['end_datetime'] ?? '';
+    $responsible_user_id = intval($_POST['responsible_user_id'] ?? $user_id);
+
+    // Handle form image
+    $form_image = '';
+    if (isset($_FILES['form_image']) && $_FILES['form_image']['error'] === UPLOAD_ERR_OK) {
+        $tmp_name = $_FILES['form_image']['tmp_name'];
+        $name = basename($_FILES['form_image']['name']);
+        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'pdf'])) {
+            $form_image = 'booking_' . time() . '_' . $user_id . '.' . $ext;
+            $upload_dir = __DIR__ . '/../uploads/booking_forms/';
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+            move_uploaded_file($tmp_name, $upload_dir . $form_image);
+        } else {
+            $error = 'รูปแบบไฟล์ไม่รองรับ (รองรับ JPG, PNG, PDF เท่านั้น)';
+        }
+    }
+
+    if (!$error) {
+        if (empty($item_ids) || empty($start_datetime) || empty($end_datetime) || empty($form_image)) {
+            $error = 'กรุณาเลือกอุปกรณ์อย่างน้อย 1 ชิ้น กรอกวันเวลา และแนบเอกสาร';
+        } elseif (strtotime($start_datetime) < time() - 3600) {
+            $error = 'ไม่สามารถจองวันเวลาในอดีตได้';
+        } elseif (strtotime($start_datetime) >= strtotime($end_datetime)) {
+            $error = 'เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น';
+        } else {
+            $pdo->beginTransaction();
+            try {
+                $usrStmt = $pdo->prepare("SELECT student_id FROM users WHERE id = ?");
+                $usrStmt->execute([$user_id]);
+                $studentId = $usrStmt->fetchColumn();
+
+                $eqNames = [];
+                $bookingIds = [];
+
+                foreach ($item_ids as $item_id) {
+                    $item_id = intval($item_id);
+                    if ($item_id <= 0) continue;
+
+                    // Insert booking for each item
+                    $insert = $pdo->prepare("INSERT INTO bookings (booking_type, item_id, user_id, responsible_user_id, start_datetime, end_datetime, form_image_path, status) VALUES ('equipment', ?, ?, ?, ?, ?, ?, 'pending')");
+                    $insert->execute([$item_id, $user_id, $responsible_user_id, $start_datetime, $end_datetime, $form_image]);
+                    $booking_id = $pdo->lastInsertId();
+                    $bookingIds[] = $booking_id;
+
+                    // Get equipment name
+                    $eqStmt = $pdo->prepare("SELECT name FROM equipments WHERE id = ?");
+                    $eqStmt->execute([$item_id]);
+                    $eqName = $eqStmt->fetchColumn();
+                    $eqNames[] = $eqName;
+
+                    // Feed entry
+                    $feedMsg = "สมาชิก {$studentId} ส่งคำขอยืม 📸 {$eqName} — รอการอนุมัติ";
+                    $feedInsert = $pdo->prepare("INSERT INTO feeds (booking_id, message) VALUES (?, ?)");
+                    $feedInsert->execute([$booking_id, $feedMsg]);
+                }
+
+                $pdo->commit();
+
+                $itemCount = count($eqNames);
+                $itemList = implode(', ', $eqNames);
+                $success = "ส่งคำขอยืมอุปกรณ์ {$itemCount} ชิ้นเรียบร้อย ({$itemList}) — รอการอนุมัติ";
+
+                // Notify all admins
+                require_once __DIR__ . '/../config/mail.php';
+                require_once __DIR__ . '/../includes/email_templates.php';
+                sendEmailToAllAdmins($pdo,
+                    "IE-Photo: คำขอยืมอุปกรณ์ {$itemCount} ชิ้นจาก {$studentId}",
+                    getBookingPendingEmailTemplate($studentId, $itemList, 'equipment')
+                );
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                $error = 'เกิดข้อผิดพลาด: ' . $e->getMessage();
+            }
+        }
+    }
+}
+
+$base_url = '../';
+require_once __DIR__ . '/../includes/header.php';
+?>
+
+<div style="max-width:700px; margin:0 auto;">
+    <div class="page-header">
+        <h2>ยืมอุปกรณ์ถ่ายภาพ</h2>
+        <p>เลือกอุปกรณ์ที่ต้องการ (เลือกได้หลายชิ้น) กำหนดผู้รับผิดชอบ แนบเอกสาร</p>
+    </div>
+
+    <div class="glass-card animate-in">
+        <?php if($success): ?>
+            <div class="alert alert-success"><i class="ph-bold ph-check-circle"></i> <?php echo $success; ?></div>
+        <?php endif; ?>
+        <?php if($error): ?>
+            <div class="alert alert-danger"><i class="ph-bold ph-warning-circle"></i> <?php echo htmlspecialchars($error); ?></div>
+        <?php endif; ?>
+
+        <form method="POST" action="borrow_form.php" enctype="multipart/form-data">
+            <!-- Equipment Multi-Select -->
+            <div class="form-group">
+                <label><i class="ph-bold ph-camera"></i> เลือกอุปกรณ์ <span style="color:var(--text-muted);font-weight:400;">(เลือกได้หลายชิ้น)</span></label>
+                <?php if(empty($equipments)): ?>
+                    <div style="padding:1.5rem;text-align:center;background:rgba(239,68,68,.04);border-radius:var(--radius-sm);border:1px dashed var(--danger);">
+                        <i class="ph ph-warning" style="font-size:1.5rem;color:var(--danger);"></i>
+                        <p style="color:var(--danger);margin:.5rem 0 0;font-size:.9rem;">ไม่มีอุปกรณ์ว่างในขณะนี้</p>
+                    </div>
+                <?php else: ?>
+                    <div id="selected-count" style="font-size:.82rem;color:var(--primary);font-weight:600;margin-bottom:.5rem;display:none;">
+                        <i class="ph-bold ph-check-circle"></i> เลือกแล้ว <span id="count-num">0</span> ชิ้น
+                    </div>
+                    <div class="eq-checklist" style="max-height:280px;overflow-y:auto;border:2px solid #e8ecf0;border-radius:var(--radius-sm);padding:.5rem;">
+                        <?php
+                        $currentType = '';
+                        foreach($equipments as $eq):
+                            $typeLabel = $eq['type'] === 'camera' ? '📷 กล้อง' : ($eq['type'] === 'lens' ? '🔍 เลนส์' : '📦 อุปกรณ์เสริม');
+                            if ($eq['type'] !== $currentType):
+                                $currentType = $eq['type'];
+                        ?>
+                            <div style="font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;padding:.5rem .8rem .2rem;margin-top:.3rem;"><?php echo $typeLabel; ?></div>
+                        <?php endif; ?>
+                        <label class="eq-item" style="display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;border-radius:8px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='rgba(242,83,28,.04)'" onmouseout="this.style.background='transparent'">
+                            <input type="checkbox" name="item_ids[]" value="<?php echo $eq['id']; ?>" class="eq-checkbox" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
+                            <span style="font-size:.92rem;"><?php echo htmlspecialchars($eq['name']); ?></span>
+                        </label>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Responsible Person -->
+            <div class="form-group">
+                <label for="responsible_user_id"><i class="ph-bold ph-user-focus"></i> ผู้รับผิดชอบหลัก</label>
+                <select id="responsible_user_id" name="responsible_user_id" class="form-control">
+                    <?php foreach($members as $m): ?>
+                        <option value="<?php echo $m['id']; ?>" <?php echo $m['id'] == $user_id ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($m['student_id']); ?>
+                            <?php echo $m['role'] === 'admin' ? ' (Admin)' : ''; ?>
+                            <?php echo $m['id'] == $user_id ? ' ← ตัวเอง' : ''; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <small class="text-muted" style="font-size:.8rem;display:block;margin-top:.3rem;"><i class="ph ph-info"></i> เลือกผู้รับผิดชอบกรณีอุปกรณ์เสียหาย</small>
+            </div>
+
+            <!-- Date/Time -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="start_datetime"><i class="ph-bold ph-calendar"></i> วันเวลาที่ยืม</label>
+                    <input type="datetime-local" id="start_datetime" name="start_datetime" class="form-control" required min="<?php echo date('Y-m-d\TH:i'); ?>">
+                </div>
+                <div class="form-group">
+                    <label for="end_datetime"><i class="ph-bold ph-calendar-check"></i> วันเวลาที่คืน</label>
+                    <input type="datetime-local" id="end_datetime" name="end_datetime" class="form-control" required min="<?php echo date('Y-m-d\TH:i'); ?>">
+                </div>
+            </div>
+
+            <!-- Document Upload -->
+            <div class="form-group">
+                <label><i class="ph-bold ph-upload"></i> อัปโหลดเอกสารขออนุญาต</label>
+                <div class="upload-zone" id="drop-zone">
+                    <i class="ph-bold ph-image"></i>
+                    <p>ถ่ายรูป/ลากไฟล์ หรือคลิกเพื่อเลือก</p>
+                    <input type="file" id="form_image" name="form_image" required accept="image/*, .pdf" capture="environment">
+                    <span id="file-name-display" class="badge" style="background:var(--primary);color:#fff;display:none;margin-top:8px;"></span>
+                </div>
+                <small class="text-muted" style="font-size:.8rem;display:block;margin-top:.3rem;"><i class="ph ph-info"></i> รองรับ JPG, PNG, PDF</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-2" <?php echo empty($equipments) ? 'disabled' : ''; ?>>
+                <i class="ph-bold ph-paper-plane-tilt"></i> ส่งคำขอยืมอุปกรณ์
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Track selected count
+document.querySelectorAll('.eq-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+        const checked = document.querySelectorAll('.eq-checkbox:checked').length;
+        const display = document.getElementById('selected-count');
+        document.getElementById('count-num').textContent = checked;
+        display.style.display = checked > 0 ? 'block' : 'none';
+    });
+});
+
+// File upload feedback
+document.getElementById('form_image').addEventListener('change', function() {
+    if(this.files && this.files[0]) {
+        const d = document.getElementById('file-name-display');
+        d.innerText = '📎 ' + this.files[0].name;
+        d.style.display = 'inline-block';
+    }
+});
+</script>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
