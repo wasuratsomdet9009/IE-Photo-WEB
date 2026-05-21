@@ -204,10 +204,10 @@ http://localhost/phpmyadmin
 
 ## สร้างฐานข้อมูลใหม่
 
-ชื่อ: iephotoo_booking.sql
+ชื่อ: iephotoo_root.sql
 
 ```txt
-iephotoo_booking.sql
+iephotoo_root.sql
 ```
 
 Collation:
