@@ -159,7 +159,6 @@ C:\xampp
 5. กด Install
 
 รอจนเสร็จ
-ถ้าติดตั้งไม่ได้ ปิดแอนตี้ไวรัสก่อน บางทีมันชอบเสือก
 
 ---
 
@@ -205,10 +204,10 @@ http://localhost/phpmyadmin
 
 ## สร้างฐานข้อมูลใหม่
 
-ชื่อ:
+ชื่อ: iephotoo_booking.sql
 
 ```txt
-iephotoo_booking
+iephotoo_booking.sql
 ```
 
 Collation:
