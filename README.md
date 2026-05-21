@@ -179,7 +179,7 @@ XAMPP Control Panel
 
 ---
 
-# 4️ นำโปรเจกต์เข้า XAMPP
+# 4️ นำโปรเจกต์เข้า XAMPP (เน้นยํ่า❗️)
 
 เอาโฟลเดอร์โปรเจกต์ทั้งหมดไปไว้ที่:
 
@@ -204,10 +204,10 @@ http://localhost/phpmyadmin
 
 ## สร้างฐานข้อมูลใหม่
 
-ชื่อ: iephotoo_root.sql
+ชื่อ: iephotoo_booking.sql
 
 ```txt
-iephotoo_root.sql
+iephotoo_booking.sql
 ```
 
 Collation:
