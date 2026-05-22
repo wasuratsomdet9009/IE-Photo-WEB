@@ -6,8 +6,8 @@ error_reporting(E_ALL);
 
 $host = 'localhost';
 $dbname = 'iephotoo_booking';
-$username = 'iephotoo_root2'; // Change this appropriately
-$password = '2nghJjgwmSdmChnWu37b';     // Change this appropriately
+$username = 'root'; // localhost
+$password = '';    // localhost
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";
