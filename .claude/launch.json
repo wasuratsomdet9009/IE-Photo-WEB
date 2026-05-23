@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "IE-Photo-WEB",
+      "runtimeExecutable": "C:\\php\\php.exe",
+      "runtimeArgs": ["-S", "localhost:8080", "-t", "C:\\Users\\weerapat\\IE_web\\IE-Photo-WEB"],
+      "port": 8080
+    }
+  ]
+}

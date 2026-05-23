@@ -64,17 +64,19 @@
     <script src="<?php echo isset($base_url) ? $base_url : '../'; ?>assets/js/ajax-handler.js"></script>
 
     <script>
-    /* Toast helper */
+    /* Toast helper — canonical definition (ใช้ทั้ง 'danger' และ 'error' เป็น ❌) */
     function showToast(msg, type) {
         const c = document.getElementById('toast-container');
         if (!c) return;
         const t = document.createElement('div');
         t.className = 'toast';
-        const icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
-        t.innerHTML = (icons[type]||'ℹ️') + ' ' + msg;
+        const icons = {success:'✅', error:'❌', danger:'❌', info:'ℹ️', warning:'⚠️'};
+        const colors = {success:'var(--success)', error:'var(--danger)', danger:'var(--danger)', warning:'var(--warning)', info:'var(--info)'};
+        t.innerHTML = '<span>' + (icons[type] || 'ℹ️') + '</span> <span>' + msg + '</span>';
+        if (colors[type]) t.style.borderLeft = '3px solid ' + colors[type];
         c.appendChild(t);
-        requestAnimationFrame(() => { t.classList.add('show'); });
-        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+        requestAnimationFrame(() => t.classList.add('show'));
+        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 4000);
     }
     </script>
 </body>

@@ -13,11 +13,12 @@ if (empty($token) || !in_array($action, ['approve', 'reject'])) {
     $message = 'ลิงก์ไม่ถูกต้องหรือหมดอายุ กรุณาติดต่อผู้ดูแลระบบ';
 } else {
     // Find booking with this consent token
-    $stmt = $pdo->prepare("SELECT id, status, consent_responded_at FROM bookings WHERE consent_token = ?");
+    // Fetch by token via DB, then verify with hash_equals() to prevent timing attacks
+    $stmt = $pdo->prepare("SELECT id, status, consent_token, consent_responded_at FROM bookings WHERE consent_token = ?");
     $stmt->execute([$token]);
     $booking = $stmt->fetch();
 
-    if (!$booking) {
+    if (!$booking || !hash_equals($booking['consent_token'], $token)) {
         $message = 'ไม่พบรายการจองที่เชื่อมกับลิงก์นี้ อาจหมดอายุแล้ว';
     } elseif ($booking['consent_responded_at'] !== null) {
         $message = 'คุณได้ตอบรับ/ปฏิเสธคำขอนี้ไปแล้ว ไม่สามารถดำเนินการซ้ำได้';
@@ -93,7 +94,7 @@ if (empty($token) || !in_array($action, ['approve', 'reject'])) {
         </div>
         <h1><?php echo $success ? ($action === 'approve' ? 'ยืนยันสำเร็จ!' : 'ปฏิเสธสำเร็จ') : 'ไม่สามารถดำเนินการได้'; ?></h1>
         <p><?php echo htmlspecialchars($message); ?></p>
-        <a href="../index.html" class="btn btn-primary">กลับหน้าหลัก</a>
+        <a href="../auth/login.php" class="btn btn-primary">กลับหน้าหลัก</a>
     </div>
 </body>
 </html>

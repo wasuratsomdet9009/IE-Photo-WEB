@@ -22,6 +22,6 @@ if (ini_get("session.use_cookies")) {
 // Finally, destroy the session
 session_destroy();
 
-// Redirect to home/login page
-header("Location: ../auth/login.php");
+// Redirect to login page (ไฟล์นี้อยู่ใน auth/ แล้ว)
+header("Location: login.php");
 exit;

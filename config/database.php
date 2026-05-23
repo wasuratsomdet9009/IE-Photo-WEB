@@ -1,13 +1,15 @@
 <?php
 // config/database.php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// แสดง error เฉพาะบน localhost เท่านั้น
+$isLocalhost = in_array($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', ['127.0.0.1', '::1', '']);
+ini_set('display_errors', $isLocalhost ? 1 : 0);
+ini_set('display_startup_errors', $isLocalhost ? 1 : 0);
 error_reporting(E_ALL);
 
 $host = 'localhost';
 $dbname = 'iephotoo_booking';
-$username = 'iephotoo_root2'; // Change this appropriately
-$password = '2nghJjgwmSdmChnWu37b';     // Change this appropriately
+$username = 'root'; // localhost
+$password = '';    // localhost
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";
@@ -20,6 +22,10 @@ $options = [
 try {
     $pdo = new PDO($dsn, $username, $password, $options);
 } catch (\PDOException $e) {
-    // In production, log the error rather than displaying it
-    die("Database connection failed: " . $e->getMessage());
+    // Log error แต่ไม่แสดง DB details ต่อผู้ใช้
+    error_log("DB connection failed: " . $e->getMessage());
+    $isLocalhost = in_array($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', ['127.0.0.1', '::1', '']);
+    die($isLocalhost
+        ? "Database connection failed: " . $e->getMessage()
+        : "ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง");
 }
