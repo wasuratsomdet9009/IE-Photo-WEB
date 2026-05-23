@@ -99,27 +99,28 @@ require_once __DIR__ . '/../includes/header.php';
                 <label for="student_id"><i class="ph ph-identification-card"></i> รหัสนักศึกษา (8 หลัก)</label>
                 <div class="input-group">
                     <input type="text" id="student_id" name="student_id" class="form-control"
-                           placeholder="6XXXXXXX" pattern="[0-9]{8}" maxlength="8"
-                           value="<?php echo htmlspecialchars($_POST['student_id'] ?? ''); ?>" required>
-                    <span class="input-group-text">@kmitl.ac.th</span>
+                           placeholder="6XXXXXXX" pattern="[0-9]{8}" maxlength="8" inputmode="numeric"
+                           value="<?php echo htmlspecialchars($_POST['student_id'] ?? ''); ?>" required
+                           autocomplete="username">
+                    <span class="input-group-text" style="font-size:.8rem;">@kmitl.ac.th</span>
                 </div>
-                <small class="text-muted" style="font-size:.8rem;margin-top:.3rem;display:block;">
-                    <i class="ph ph-info"></i> ระบบจะใช้อีเมลสถาบันในการรับข่าวสาร
-                </small>
+                <div class="field-hint">
+                    <i class="ph ph-envelope-simple"></i> อีเมลยืนยันจะถูกส่งไปที่ studentid@kmitl.ac.th
+                </div>
             </div>
 
             <!-- ชื่อ-นามสกุล -->
             <div class="form-row">
                 <div class="form-group">
-                    <label for="first_name"><i class="ph ph-user"></i> ชื่อจริง</label>
+                    <label for="first_name">ชื่อจริง</label>
                     <input type="text" id="first_name" name="first_name" class="form-control"
-                           placeholder="เช่น สมชาย"
+                           placeholder="สมชาย" autocomplete="given-name"
                            value="<?php echo htmlspecialchars($_POST['first_name'] ?? ''); ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="last_name"><i class="ph ph-user"></i> นามสกุล</label>
+                    <label for="last_name">นามสกุล</label>
                     <input type="text" id="last_name" name="last_name" class="form-control"
-                           placeholder="เช่น ใจดี"
+                           placeholder="ใจดี" autocomplete="family-name"
                            value="<?php echo htmlspecialchars($_POST['last_name'] ?? ''); ?>" required>
                 </div>
             </div>
@@ -129,32 +130,39 @@ require_once __DIR__ . '/../includes/header.php';
                 <div style="position:relative;">
                     <input type="password" id="password" name="password" class="form-control"
                            placeholder="อย่างน้อย 6 ตัวอักษร" required minlength="6"
-                           style="padding-right:3rem;">
-                    <button type="button" onclick="togglePwd()" tabindex="-1"
+                           style="padding-right:3rem;" autocomplete="new-password">
+                    <button type="button" onclick="togglePwd('password','pwd-eye')" tabindex="-1"
                             style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);
                                    background:none;border:none;cursor:pointer;color:var(--text-muted);
                                    padding:0;line-height:1;font-size:1.1rem;">
                         <i class="ph ph-eye" id="pwd-eye"></i>
                     </button>
                 </div>
-                <small class="text-muted" style="font-size:.8rem;margin-top:.3rem;display:block;">
-                    <i class="ph ph-info"></i> อย่างน้อย 6 ตัวอักษร
-                </small>
+                <div class="pwd-strength" id="pwd-bar"></div>
+                <div class="field-hint" id="pwd-hint" style="display:none"></div>
             </div>
 
             <div class="form-group">
                 <label for="phone"><i class="ph ph-phone"></i> เบอร์โทรศัพท์
-                    <span style="font-weight:400;color:var(--text-muted);">(เลือกกรอก)</span>
+                    <span style="font-weight:400;color:var(--text-muted);font-size:.8rem;">(ไม่บังคับ)</span>
                 </label>
-                <input type="tel" id="phone" name="phone" class="form-control"
-                       placeholder="0XXXXXXXXX" maxlength="10"
-                       value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>">
+                <div class="input-icon-wrap">
+                    <input type="tel" id="phone" name="phone" class="form-control"
+                           placeholder="0XXXXXXXXX" maxlength="10" inputmode="numeric"
+                           autocomplete="tel"
+                           value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>">
+                    <i class="ph ph-phone input-icon"></i>
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 mt-2">
+            <button type="submit" class="btn btn-primary w-100 mt-2" style="font-size:1rem;padding:.85rem;">
                 <i class="ph-bold ph-user-plus"></i> สมัครสมาชิก
             </button>
-            <div class="text-center mt-4">
+            <div class="divider">มีบัญชีแล้ว?</div>
+            <a href="login.php" class="btn btn-outline w-100" style="justify-content:center;">
+                <i class="ph ph-sign-in"></i> เข้าสู่ระบบ
+            </a>
+            <div class="text-center mt-4" style="display:none">
                 <p class="text-muted" style="font-size:.9rem;">
                     มีบัญชีอยู่แล้ว? <a href="login.php" style="font-weight:700;">เข้าสู่ระบบที่นี่</a>
                 </p>
@@ -164,16 +172,35 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
-function togglePwd() {
-    var inp = document.getElementById('password');
-    var eye = document.getElementById('pwd-eye');
-    if (inp.type === 'password') {
-        inp.type = 'text';
-        eye.className = 'ph ph-eye-slash';
-    } else {
-        inp.type = 'password';
-        eye.className = 'ph ph-eye';
-    }
+function togglePwd(inputId, eyeId) {
+    var inp = document.getElementById(inputId);
+    var eye = document.getElementById(eyeId);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    eye.className = inp.type === 'password' ? 'ph ph-eye' : 'ph ph-eye-slash';
 }
+
+// Student ID → auto-validate 8 digits
+document.getElementById('student_id').addEventListener('input', function () {
+    var ok = /^[0-9]{8}$/.test(this.value);
+    this.classList.toggle('is-valid',   ok && this.value.length === 8);
+    this.classList.toggle('is-invalid', this.value.length === 8 && !ok);
+});
+
+// Password strength hint text
+document.getElementById('password').addEventListener('input', function () {
+    var hint = document.getElementById('pwd-hint');
+    var v = this.value;
+    if (!v) { hint.style.display='none'; return; }
+    var labels = ['อ่อนมาก — เพิ่มตัวเลขหรืออักขระพิเศษ','พอใช้ได้','รหัสผ่านแข็งแกร่ง 💪'];
+    var s = 0;
+    if (v.length >= 8) s++;
+    if (/[A-Za-z]/.test(v)) s++;
+    if (/[0-9]/.test(v)) s++;
+    if (/[^A-Za-z0-9]/.test(v)) s++;
+    var idx = s <= 1 ? 0 : s <= 3 ? 1 : 2;
+    hint.textContent = labels[idx];
+    hint.style.display = 'flex';
+    hint.style.color = ['var(--danger)','var(--warning)','var(--success)'][idx];
+});
 </script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

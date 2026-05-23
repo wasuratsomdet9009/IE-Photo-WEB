@@ -92,24 +92,36 @@ require_once __DIR__ . '/../includes/header.php';
 
         <form method="POST" action="login.php" id="login-form">
             <div class="form-group">
-                <label for="identifier"><i class="ph ph-user"></i> รหัสนักศึกษา หรือ อีเมล</label>
-                <input type="text" id="identifier" name="identifier" class="form-control"
-                       placeholder="6XXXXXXX หรือ xxxxxx@kmitl.ac.th" required
-                       value="<?php echo htmlspecialchars($_POST['identifier'] ?? ''); ?>">
-                <small id="email-hint" class="text-muted" style="font-size:.8rem;margin-top:.3rem;display:none;">
-                    <i class="ph ph-warning" style="color:var(--warning)"></i> อนุญาตเฉพาะอีเมล @kmitl.ac.th เท่านั้น
-                </small>
+                <label for="identifier"><i class="ph ph-identification-card"></i> รหัสนักศึกษา หรือ อีเมล</label>
+                <div class="input-icon-wrap">
+                    <input type="text" id="identifier" name="identifier" class="form-control"
+                           placeholder="6XXXXXXX หรือ xxxxxx@kmitl.ac.th" required autocomplete="username"
+                           value="<?php echo htmlspecialchars($_POST['identifier'] ?? ''); ?>">
+                    <i class="ph ph-user input-icon"></i>
+                </div>
+                <div id="email-hint" class="field-error" style="display:none;">
+                    <i class="ph ph-warning-circle"></i> อนุญาตเฉพาะอีเมล @kmitl.ac.th เท่านั้น
+                </div>
             </div>
             <div class="form-group">
                 <label for="password"><i class="ph ph-lock"></i> รหัสผ่าน</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="ระบุรหัสผ่านของคุณ" required>
+                <div style="position:relative;">
+                    <input type="password" id="password" name="password" class="form-control"
+                           placeholder="ระบุรหัสผ่านของคุณ" required autocomplete="current-password"
+                           style="padding-right:3rem;">
+                    <button type="button" onclick="togglePwd('password','pwd-eye-login')" tabindex="-1"
+                            style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0;font-size:1.1rem;">
+                        <i class="ph ph-eye" id="pwd-eye-login"></i>
+                    </button>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100 mt-2" id="login-btn">
+            <button type="submit" class="btn btn-primary w-100 mt-2" id="login-btn" style="font-size:1rem;padding:.85rem;">
                 <i class="ph-bold ph-sign-in"></i> เข้าสู่ระบบ
             </button>
-            <div class="text-center mt-4">
+            <div class="divider">หรือ</div>
+            <div class="text-center">
                 <p class="text-muted" style="font-size:.9rem;">
-                    ยังไม่มีบัญชี? <a href="register.php" style="font-weight:700;">สมัครสมาชิกใหม่</a>
+                    ยังไม่มีบัญชี? <a href="register.php" style="font-weight:700;color:var(--primary);">สมัครสมาชิกใหม่ →</a>
                 </p>
             </div>
         </form>
@@ -125,15 +137,25 @@ require_once __DIR__ . '/../includes/header.php';
     function validate() {
         var val = input.value.trim();
         if (val.includes('@') && !val.toLowerCase().endsWith('@kmitl.ac.th')) {
-            hint.style.display = 'block';
-            input.style.borderColor = 'var(--warning)';
+            hint.style.display = 'flex';
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
             btn.disabled = true;
         } else {
             hint.style.display = 'none';
-            input.style.borderColor = '';
+            input.classList.remove('is-invalid');
+            if (val) input.classList.add('is-valid');
             btn.disabled = false;
         }
     }
+
+    function togglePwd(id, eyeId) {
+        var inp = document.getElementById(id);
+        var eye = document.getElementById(eyeId);
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+        eye.className = inp.type === 'password' ? 'ph ph-eye' : 'ph ph-eye-slash';
+    }
+    window.togglePwd = togglePwd;
 
     input.addEventListener('input', validate);
     input.addEventListener('blur',  validate);

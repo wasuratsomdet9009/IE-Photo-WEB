@@ -587,3 +587,222 @@ textarea.form-control{resize:vertical;min-height:80px}
     .glass-card{box-shadow:none;border:1px solid #ddd}
     body{padding-bottom:0}
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   UX POLISH — Loading, States, Feedback, Micro-interactions
+   ═══════════════════════════════════════════════════════════════ */
+
+/* === Button Loading State === */
+.btn-loading{
+    position:relative;
+    pointer-events:none;
+    opacity:.8;
+}
+.btn-loading .btn-text{ visibility:hidden }
+.btn-loading::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    margin:auto;
+    width:18px;height:18px;
+    border:2.5px solid rgba(255,255,255,.35);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:btnSpin .65s linear infinite;
+}
+.btn-outline.btn-loading::after{
+    border-color:rgba(242,83,28,.3);
+    border-top-color:var(--primary);
+}
+@keyframes btnSpin{ to{ transform:rotate(360deg) } }
+
+/* Button press feedback */
+.btn:active:not(.btn-loading){ transform:translateY(1px) scale(.98) !important }
+
+/* === Form Field States === */
+.form-control.is-invalid{
+    border-color:var(--danger);
+    background:rgba(239,68,68,.03);
+    box-shadow:0 0 0 4px rgba(239,68,68,.08);
+}
+.form-control.is-valid{
+    border-color:var(--success);
+    background:rgba(34,197,94,.03);
+    box-shadow:0 0 0 4px rgba(34,197,94,.07);
+}
+.field-error{
+    font-size:.78rem;color:var(--danger);
+    margin-top:.3rem;display:flex;align-items:center;gap:4px;
+    animation:alertSlideIn .2s ease;
+}
+.field-hint{
+    font-size:.78rem;color:var(--text-muted);
+    margin-top:.3rem;display:flex;align-items:center;gap:4px;
+}
+/* Password strength bar */
+.pwd-strength{height:4px;border-radius:2px;margin-top:.4rem;transition:width .4s,background .4s;width:0}
+.pwd-weak   { background:var(--danger);  width:33% }
+.pwd-medium { background:var(--warning); width:66% }
+.pwd-strong { background:var(--success); width:100% }
+
+/* === Table UX === */
+.glass-table tbody tr{
+    transition:box-shadow .18s,transform .18s;
+    cursor:default;
+}
+.glass-table tbody tr:hover td{
+    background:#fafbff;
+}
+.glass-table tbody tr:hover td:first-child{
+    border-left-color:var(--primary);
+}
+/* Striped rows */
+.glass-table.striped tbody tr:nth-child(even) td{ background:#f9fafb }
+
+/* === Skeleton Loading === */
+.skeleton{
+    background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);
+    background-size:200% 100%;
+    animation:skeletonPulse 1.4s ease infinite;
+    border-radius:var(--radius-xs);
+    display:inline-block;
+}
+@keyframes skeletonPulse{
+    0%  { background-position:200% 0 }
+    100%{ background-position:-200% 0 }
+}
+.skeleton-text  { height:14px;width:100%;margin-bottom:.5rem }
+.skeleton-title { height:22px;width:60%;margin-bottom:.75rem }
+.skeleton-avatar{ width:48px;height:48px;border-radius:50% }
+.skeleton-card  { height:120px;width:100%;border-radius:var(--radius) }
+
+/* === Better Scrollbar === */
+::-webkit-scrollbar{ width:6px;height:6px }
+::-webkit-scrollbar-track{ background:transparent }
+::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.15);border-radius:3px }
+::-webkit-scrollbar-thumb:hover{ background:rgba(0,0,0,.25) }
+
+/* === Text Selection === */
+::selection{ background:rgba(242,83,28,.18);color:var(--text) }
+
+/* === Focus Ring (Accessibility) === */
+:focus-visible{
+    outline:2.5px solid var(--primary);
+    outline-offset:2px;
+    border-radius:var(--radius-xs);
+}
+button:focus-visible, a:focus-visible{
+    outline:2.5px solid var(--primary);
+    outline-offset:3px;
+}
+
+/* === Disabled State === */
+.btn:disabled,.btn[disabled]{
+    opacity:.45;pointer-events:none;cursor:not-allowed;transform:none !important;
+}
+.form-control:disabled,.form-control[readonly]{
+    background:#f5f5f5;cursor:not-allowed;opacity:.7;
+}
+
+/* === Alert Auto-dismiss Bar === */
+.alert{ position:relative;overflow:hidden }
+.alert-dismiss-bar{
+    position:absolute;bottom:0;left:0;height:2px;
+    background:currentColor;opacity:.25;
+    animation:dismissBar var(--dismiss-duration,4s) linear forwards;
+    width:100%;transform-origin:left;
+}
+@keyframes dismissBar{ to{ transform:scaleX(0) } }
+
+/* === Toast Enhancements === */
+.toast{
+    max-width:360px;
+    animation:toastIn .4s cubic-bezier(.175,.885,.32,1.275) both;
+}
+.toast.hiding{
+    animation:toastOut .3s ease forwards;
+}
+@keyframes toastIn {
+    from{ opacity:0;transform:translateX(120%) }
+    to  { opacity:1;transform:translateX(0) }
+}
+@keyframes toastOut{
+    to{ opacity:0;transform:translateX(120%) }
+}
+
+/* === Empty State === */
+.empty-state{
+    text-align:center;padding:3rem 1.5rem;
+}
+.empty-state-icon{
+    width:80px;height:80px;border-radius:24px;
+    background:linear-gradient(135deg,rgba(242,83,28,.08),rgba(239,57,97,.08));
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 1.2rem;
+    font-size:2rem;
+}
+.empty-state h3{ font-size:1.1rem;margin-bottom:.4rem;color:var(--text) }
+.empty-state p { font-size:.88rem;color:var(--text-muted) }
+
+/* === Card Highlight === */
+.glass-card.highlight{
+    border-color:rgba(242,83,28,.35);
+    box-shadow:0 0 0 3px rgba(242,83,28,.1),var(--card-shadow);
+}
+
+/* === Progress Bar === */
+.progress{
+    height:6px;background:#e8ecf0;border-radius:3px;overflow:hidden;
+}
+.progress-bar{
+    height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));
+    border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1);
+}
+
+/* === Input with Prefix Icon === */
+.input-icon-wrap{ position:relative }
+.input-icon-wrap .form-control{ padding-left:2.6rem }
+.input-icon-wrap .input-icon{
+    position:absolute;left:.85rem;top:50%;transform:translateY(-50%);
+    color:var(--text-muted);font-size:1rem;pointer-events:none;
+    transition:color .2s;
+}
+.input-icon-wrap .form-control:focus ~ .input-icon{ color:var(--primary) }
+
+/* === Divider === */
+.divider{
+    display:flex;align-items:center;gap:.75rem;
+    color:var(--text-muted);font-size:.8rem;margin:1.25rem 0;
+}
+.divider::before,.divider::after{
+    content:'';flex:1;height:1px;background:var(--border);
+}
+
+/* === Notification Badge Pulse === */
+.badge-pulse{
+    position:relative;
+}
+.badge-pulse::after{
+    content:'';position:absolute;inset:-2px;border-radius:50%;
+    background:var(--primary);opacity:.35;
+    animation:badgePulse 1.8s ease infinite;
+}
+@keyframes badgePulse{
+    0%,100%{ transform:scale(1);opacity:.35 }
+    50%    { transform:scale(1.5);opacity:0 }
+}
+
+/* === Page Transition === */
+.page-enter{
+    animation:pageEnter .35s cubic-bezier(.4,0,.2,1) both;
+}
+@keyframes pageEnter{
+    from{ opacity:0;transform:translateY(8px) }
+    to  { opacity:1;transform:translateY(0) }
+}
+
+/* === Smooth Image Load === */
+img.lazy{
+    opacity:0;transition:opacity .4s;
+}
+img.lazy.loaded{ opacity:1 }
