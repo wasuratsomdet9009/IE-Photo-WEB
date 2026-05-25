@@ -14,4 +14,4 @@ WORKDIR /app
 COPY . /app
 
 # Railway injects $PORT at runtime
-CMD php -S 0.0.0.0:$PORT -t /app
+CMD php -S 0.0.0.0:$PORT -t /app /app/router.php
