@@ -96,7 +96,9 @@ function isActive($page) {
                 if (overlay) overlay.classList.remove('active');
                 var icon = toggleBtn.querySelector('i');
                 if (icon) { icon.classList.remove('ph-x'); icon.classList.add('ph-list'); }
-                document.body.style.overflow = '';
+                /* ใช้ class แทน overflow:hidden โดยตรง — iOS Safari bug:
+                   overflow:hidden บน body ทำให้ position:fixed (bottom-nav) รับ touch ไม่ได้ */
+                document.documentElement.classList.remove('menu-open');
             }
 
             /* เปิด/ปิดเมนู */
@@ -109,8 +111,7 @@ function isActive($page) {
                     icon.classList.toggle('ph-list', !isOpen);
                     icon.classList.toggle('ph-x', isOpen);
                 }
-                /* ล็อก scroll body เมื่อเมนูเปิด (ป้องกัน scroll ผ่านใต้เมนู) */
-                document.body.style.overflow = isOpen ? 'hidden' : '';
+                document.documentElement.classList.toggle('menu-open', isOpen);
             }
 
             /* ใช้ทั้ง click และ touchend เพื่อรองรับทุก device */

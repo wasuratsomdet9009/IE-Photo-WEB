@@ -141,9 +141,16 @@ a:hover{color:var(--primary-hover)}
 .bottom-nav a.active,.bottom-nav a:hover{color:var(--primary)}
 .bottom-nav a.active i{transform:scale(1.1)}
 
+/* เมื่อเมนูเปิด — ล็อก scroll แบบ iOS-safe (ไม่ใช้ body overflow:hidden) */
+html.menu-open{overflow:hidden}
+html.menu-open body{overflow:hidden;touch-action:none}
+
 /* === Slide Menu Overlay === */
 .nav-overlay{
-    position:fixed;inset:0;z-index:900;
+    position:fixed;top:0;left:0;right:0;
+    /* bottom จะถูก override ใน mobile media query ให้ไม่คลุม bottom-nav */
+    bottom:0;
+    z-index:900;
     background:rgba(0,0,0,0.25);
     opacity:0;visibility:hidden;
     transition:opacity .3s,visibility .3s;
@@ -397,6 +404,8 @@ textarea.form-control{resize:vertical;min-height:80px}
 @media (max-width:950px) {
     .mobile-toggle{display:flex;align-items:center;justify-content:center}
     .bottom-nav{display:block}
+    /* overlay ต้องไม่คลุม bottom-nav — ป้องกัน iOS Safari ดัก touch event ใต้ overlay */
+    .nav-overlay{bottom:calc(var(--bottom-nav-h) + var(--safe-bottom))}
 
     .nav-links{
         position:fixed;top:0;right:-100%;
