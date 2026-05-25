@@ -727,10 +727,13 @@ textarea.form-control{resize:vertical;min-height:80px}
     .modal-legacy .glass-card{max-height:calc(100vh - 3rem)}
 }
 
-/* === My tasks: due-date on small screens wrap === */
+/* === My tasks: due-date on very small screens stack vertically === */
 @media (max-width:420px){
-    .task-meta{display:flex;flex-direction:column;gap:.2rem}
+    .task-meta{flex-direction:column;align-items:flex-start;gap:.2rem}
     .task-meta span{margin-left:0 !important}
+    /* task action buttons wrap on small phones */
+    .task-actions{flex-wrap:wrap !important}
+    .task-actions .btn{flex:1;min-width:120px;justify-content:center}
 }
 
 /* === Page container max-width responsive === */
@@ -738,7 +741,8 @@ textarea.form-control{resize:vertical;min-height:80px}
 .page-container-md{max-width:700px;margin:0 auto;width:100%;padding:0}
 .page-container-sm{max-width:550px;margin:0 auto;width:100%;padding:0}
 @media (max-width:600px){
-    .page-container,.page-container-md,.page-container-sm{padding:0 .1rem}
+    /* main-content already provides .7rem side padding — containers need no extra padding */
+    .page-container,.page-container-md,.page-container-sm{padding:0}
 }
 
 /* === Dashboard chart grid mobile === */
@@ -750,18 +754,14 @@ textarea.form-control{resize:vertical;min-height:80px}
 /* === Table overflow improve === */
 .table-responsive{border-radius:var(--radius-sm);overflow-x:auto}
 
-/* === Mobile modal safe-area fix === */
+/* === Modal: on mobile account for bottom-nav so content isn't hidden behind it === */
 @media (max-width:950px){
-    /* inset: 0 modals should not go behind bottom-nav */
-    [style*="z-index:9000"],[style*="z-index: 9000"]{
+    .modal-overlay,.modal-legacy{
         padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + 1rem) !important
     }
 }
 
-/* === Form grid 2-col for medium screens === */
-@media (min-width:480px) and (max-width:600px){
-    .form-row{flex-direction:row !important;gap:.6rem}
-}
+/* note: removed 480–600 form-row:row override — it conflicted with .add-form-row column layout */
 
 /* === Accessibility: Focus rings === */
 :focus-visible{
@@ -771,6 +771,44 @@ textarea.form-control{resize:vertical;min-height:80px}
 button:focus-visible,a:focus-visible{
     outline:2px solid var(--primary);
     outline-offset:3px;
+}
+
+/* === task-meta: flex row wrapping (used in my_tasks.php) === */
+.task-meta{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem}
+.task-meta span{display:inline-flex;align-items:center;gap:3px}
+
+/* === Ultra-small phones: ≤ 320px (iPhone SE 1st gen, Moto G4) === */
+@media (max-width:320px){
+    :root{--radius:12px;--radius-sm:8px;--radius-xs:6px}
+    .glass-card{padding:.7rem;border-radius:11px}
+    .btn{padding:.5rem .7rem;font-size:.79rem}
+    .btn-sm{padding:.3rem .5rem;font-size:.73rem}
+    .stat-card{padding:.6rem .4rem}
+    .stat-card .stat-value{font-size:1rem}
+    .stat-card .stat-label{font-size:.67rem}
+    .stat-card .stat-icon{display:none}
+    .main-content{padding:0 .4rem}
+    .mobile-card{padding:.7rem}
+    .badge{font-size:.65rem;padding:.2rem .45rem}
+    .page-header h2{font-size:1.05rem}
+    .page-header p{font-size:.78rem}
+    .form-control{font-size:14px;padding:.6rem .75rem}
+    .bottom-nav a{font-size:.55rem;padding:.25rem .3rem;min-width:36px}
+    .bottom-nav a i{font-size:1rem}
+}
+
+/* === Touch-device: disable hover micro-animations that can "stick" === */
+@media (hover:none) and (pointer:coarse){
+    .glass-card:hover{transform:none;box-shadow:var(--card-shadow),var(--card-glow);border-color:var(--card-border)}
+    .stat-card:hover{transform:none;box-shadow:var(--card-shadow)}
+    .contact-card:hover{transform:none;box-shadow:var(--card-shadow)}
+    .mobile-card:hover{transform:none;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+    .feed-card:hover{transform:none;box-shadow:var(--card-shadow)}
+    .btn:not(:active):hover{transform:none !important;box-shadow:none !important}
+    .btn-primary:hover{animation:none}
+    .bottom-nav a:hover{transform:none}
+    .upload-zone:hover{transform:none}
+    .nav-links a:hover{transform:none}
 }
 
 /* === Print === */

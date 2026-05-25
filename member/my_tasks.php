@@ -110,7 +110,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php endif;?>
             </div>
             <?php if(!in_array($t['status'],['completed','cancelled'])):?>
-            <form method="POST" style="display:flex;gap:.5rem;">
+            <form method="POST" class="task-actions" style="display:flex;gap:.5rem;flex-wrap:wrap;">
                 <input type="hidden" name="task_id" value="<?php echo $t['id'];?>">
                 <input type="hidden" name="update_status" value="1">
                 <?php if($t['status']==='pending'):?>
