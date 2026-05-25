@@ -408,10 +408,13 @@ textarea.form-control{resize:vertical;min-height:80px}
 
 /* ── Admin mobile: hamburger slide panel ── */
 @media (max-width:950px){
+    /* ยก navbar สูงกว่า panel — ให้ปุ่ม ☰/✕ อยู่ด้านบน panel เสมอ */
+    .is-admin .glass-navbar{ z-index:1070 }
     /* แสดงปุ่ม hamburger เฉพาะ admin */
     .is-admin .mobile-toggle{
         display:flex !important;
         align-items:center;justify-content:center;
+        z-index:1075; /* สูงกว่า panel */
     }
     /* nav-links กลายเป็น slide panel */
     .is-admin .nav-links{

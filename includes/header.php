@@ -42,6 +42,9 @@ function isActive($page) {
             </button>
             <?php endif; ?>
             <div class="nav-links" id="nav-links">
+                <?php if(isset($_SESSION['role']) && $_SESSION['role']==='admin'): ?>
+                <button id="nav-close-btn" onclick="document.getElementById('mobile-toggle-btn').click()" aria-label="ปิดเมนู" style="display:none;position:absolute;top:14px;right:14px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);min-width:44px;min-height:44px;align-items:center;justify-content:center;z-index:1076;"><i class="ph-bold ph-x"></i></button>
+                <?php endif; ?>
                 <?php if(isset($_SESSION['user_id'])): ?>
                     <?php if($_SESSION['role'] === 'admin'): ?>
                         <a href="<?php echo $base_url; ?>admin/dashboard.php" class="<?php echo isActive('dashboard');?>"><i class="ph ph-squares-four"></i> แดชบอร์ด</a>
@@ -87,13 +90,15 @@ function isActive($page) {
     <?php if(isset($_SESSION['role']) && $_SESSION['role']==='admin'): ?>
     <script>
     (function(){
-        var btn = document.getElementById('mobile-toggle-btn');
-        var nav = document.getElementById('nav-links');
-        var ov  = document.getElementById('nav-overlay');
+        var btn   = document.getElementById('mobile-toggle-btn');
+        var nav   = document.getElementById('nav-links');
+        var ov    = document.getElementById('nav-overlay');
+        var closeX= document.getElementById('nav-close-btn');
         if(!btn||!nav) return;
         function close(){
             nav.classList.remove('active');
             if(ov) ov.classList.remove('active');
+            if(closeX) closeX.style.display='none';
             var ic=btn.querySelector('i');
             if(ic){ic.classList.remove('ph-x');ic.classList.add('ph-list');}
             document.documentElement.classList.remove('menu-open');
@@ -102,6 +107,8 @@ function isActive($page) {
             e.stopPropagation();
             var open=nav.classList.toggle('active');
             if(ov) ov.classList.toggle('active',open);
+            /* ปุ่ม ✕ ในตัว panel */
+            if(closeX) closeX.style.display=open?'flex':'none';
             var ic=btn.querySelector('i');
             if(ic){ic.classList.toggle('ph-list',!open);ic.classList.toggle('ph-x',open);}
             document.documentElement.classList.toggle('menu-open',open);
