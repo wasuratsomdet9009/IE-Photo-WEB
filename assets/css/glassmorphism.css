@@ -623,12 +623,34 @@ textarea.form-control{resize:vertical;min-height:80px}
     max-width:480px;width:100%;position:relative;
     max-height:calc(100dvh - 3rem);overflow-y:auto;
     -webkit-overflow-scrolling:touch;
-    /* Ensure inner scrollable on landscape mobile */
     scrollbar-width:thin;
 }
 /* Fallback for browsers without dvh */
 @supports not (height:100dvh){
     .modal-inner{max-height:calc(100vh - 3rem)}
+}
+/* Mobile: modal เกาะด้านบนจอ ทำให้เห็นปุ่มทันทีไม่ต้องเลื่อน */
+@media (max-width:950px){
+    .modal-overlay{
+        align-items:flex-start;
+        padding-top:max(.8rem, env(safe-area-inset-top));
+    }
+    /* upload-zone ใน modal — compact มาก เพื่อให้ปุ่ม submit พอดีจอ */
+    .modal-overlay .upload-zone,
+    .modal-legacy .upload-zone{
+        padding:.7rem .8rem;
+    }
+    .modal-overlay .upload-zone i,
+    .modal-legacy .upload-zone i{
+        font-size:1.4rem !important;
+    }
+    .modal-overlay .upload-zone p,
+    .modal-legacy .upload-zone p{
+        font-size:.75rem;margin:.2rem 0 0;
+    }
+    .modal-inner{
+        max-height:calc(100dvh - 5rem);
+    }
 }
 
 /* === Responsive Improvements === */

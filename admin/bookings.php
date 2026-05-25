@@ -297,9 +297,10 @@ require_once __DIR__ . '/../includes/header.php';
 var _bn = document.getElementById('bottom-nav');
 function openReturnModal(bookingId) {
     document.getElementById('return_booking_id').value = bookingId;
+    /* scroll to top ก่อน — ป้องกัน Android WebView render fixed modal ผิดตำแหน่ง */
+    window.scrollTo({top: 0, behavior: 'instant'});
     document.getElementById('returnModal').classList.add('open');
     document.body.style.overflow = 'hidden';
-    /* ซ่อน bottom-nav ป้องกันบัง/ดัก touch บน Android WebView */
     if (_bn) { _bn.style.pointerEvents = 'none'; _bn.style.visibility = 'hidden'; }
 }
 function closeReturnModal() {

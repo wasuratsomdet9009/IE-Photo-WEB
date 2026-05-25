@@ -184,6 +184,7 @@ require_once __DIR__ . '/../includes/header.php';
 var _bn = document.getElementById('bottom-nav');
 function openReturnModal(id){
     document.getElementById('return_booking_id').value=id;
+    window.scrollTo({top:0, behavior:'instant'});
     document.getElementById('returnModal').classList.add('open');
     document.body.style.overflow='hidden';
     if (_bn){ _bn.style.pointerEvents='none'; _bn.style.visibility='hidden'; }
