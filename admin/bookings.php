@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($booking_id > 0 && in_array($action, ['approve', 'reject', 'return'])) {
-        $status = $action === 'return' ? 'returned' : $action . 'd';
+        $status = match($action) { 'approve'=>'approved', 'reject'=>'rejected', 'return'=>'returned', default=>$action };
 
         // Handle return image upload — ตรวจสอบทั้ง extension และ MIME type จริง
         $return_image = null;
