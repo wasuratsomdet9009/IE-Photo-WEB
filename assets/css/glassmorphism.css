@@ -659,10 +659,87 @@ textarea.form-control{resize:vertical;min-height:80px}
     .eq-checklist{max-height:220px !important}
 }
 
+/* === Table scroll hint === */
+.table-scroll-hint{
+    display:none;
+    text-align:center;
+    font-size:.75rem;
+    color:var(--text-muted);
+    padding:.3rem 0 .5rem;
+    letter-spacing:.3px;
+}
+.table-scroll-hint i{font-size:.85rem}
+@media (max-width:950px){
+    .table-scroll-hint{display:block}
+}
+
+/* === Tasks grid — responsive === */
+.tasks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+@media (max-width:600px){
+    .tasks-grid{grid-template-columns:1fr}
+}
+
+/* === Filter bar === */
+.filter-bar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+@media (max-width:600px){
+    .filter-bar{gap:.4rem}
+    .filter-bar .btn-sm{flex-grow:1;text-align:center;justify-content:center}
+}
+
+/* === Flex-between with action buttons on mobile === */
+@media (max-width:600px){
+    .flex-between .filter-bar{width:100%}
+    .page-actions{display:flex;flex-direction:column;gap:.5rem;width:100%}
+    .page-actions .btn{width:100%;justify-content:center}
+}
+
+/* === Add form rows stack on mobile === */
+@media (max-width:600px){
+    .add-form-row{flex-direction:column !important}
+    .add-form-row > *{flex:none !important;width:100%}
+    .add-form-actions{width:100%;display:flex;gap:.5rem}
+    .add-form-actions .btn{flex:1}
+}
+
+/* === Studio booking grid: form first on mobile === */
+@media (max-width:950px){
+    .studio-booking-grid{display:flex;flex-direction:column-reverse}
+}
+@media (min-width:951px){
+    .studio-booking-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+}
+
+/* === Users modal: proper modal-overlay class === */
+.modal-legacy{
+    display:none;
+    position:fixed;inset:0;z-index:2000;
+    background:rgba(0,0,0,.55);
+    align-items:center;justify-content:center;
+    padding:max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.modal-legacy.open{display:flex}
+.modal-legacy .glass-card{
+    max-height:calc(100dvh - 3rem);
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+@supports not (height:100dvh){
+    .modal-legacy .glass-card{max-height:calc(100vh - 3rem)}
+}
+
+/* === My tasks: due-date on small screens wrap === */
+@media (max-width:420px){
+    .task-meta{display:flex;flex-direction:column;gap:.2rem}
+    .task-meta span{margin-left:0 !important}
+}
+
 /* === Page container max-width responsive === */
-.page-container{max-width:900px;margin:0 auto;width:100%}
-.page-container-md{max-width:700px;margin:0 auto;width:100%}
-.page-container-sm{max-width:550px;margin:0 auto;width:100%}
+.page-container{max-width:900px;margin:0 auto;width:100%;padding:0}
+.page-container-md{max-width:700px;margin:0 auto;width:100%;padding:0}
+.page-container-sm{max-width:550px;margin:0 auto;width:100%;padding:0}
+@media (max-width:600px){
+    .page-container,.page-container-md,.page-container-sm{padding:0 .1rem}
+}
 
 /* === Dashboard chart grid mobile === */
 @media (max-width:600px){

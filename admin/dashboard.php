@@ -75,23 +75,24 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <div class="charts-grid">
-    <div class="glass-card animate-in" style="padding:1.3rem;">
+    <div class="glass-card animate-in">
         <h3 style="font-size:1rem;margin-bottom:1rem;"><i class="ph-bold ph-chart-pie-slice"></i> สัดส่วนการจอง</h3>
-        <div style="height:220px;"><canvas id="typeChart"></canvas></div>
+        <div style="height:clamp(160px,30vw,220px);"><canvas id="typeChart"></canvas></div>
     </div>
-    <div class="glass-card animate-in" style="padding:1.3rem;">
+    <div class="glass-card animate-in">
         <h3 style="font-size:1rem;margin-bottom:1rem;"><i class="ph-bold ph-chart-bar"></i> แนวโน้มการจอง (7 วัน)</h3>
-        <div style="height:220px;"><canvas id="trendChart"></canvas></div>
+        <div style="height:clamp(160px,30vw,220px);"><canvas id="trendChart"></canvas></div>
     </div>
 </div>
 
 <div class="glass-card animate-in" style="padding:1.5rem;">
-    <div class="flex-between" style="margin-bottom:1.2rem;">
-        <h3 style="font-size:1.1rem;margin:0;"><i class="ph-bold ph-calendar-check"></i> รายการจองล่าสุด</h3>
-        <a href="bookings.php" class="btn btn-outline btn-sm">ดูทั้งหมด</a>
+    <div class="flex-between" style="margin-bottom:1.2rem;gap:.6rem;">
+        <h3 style="font-size:1.1rem;margin:0;flex:1;"><i class="ph-bold ph-calendar-check"></i> รายการจองล่าสุด</h3>
+        <a href="bookings.php" class="btn btn-outline btn-sm" style="flex-shrink:0;">ดูทั้งหมด</a>
     </div>
 
     <!-- Desktop -->
+    <p class="table-scroll-hint"><i class="ph ph-arrow-left"></i> เลื่อนดูข้อมูลเพิ่มเติม <i class="ph ph-arrow-right"></i></p>
     <div class="table-responsive desktop-table">
         <table class="glass-table">
             <thead><tr><th>ID</th><th>ประเภท</th><th>ผู้จอง</th><th>เริ่มวันที่</th><th>สถานะ</th></tr></thead>

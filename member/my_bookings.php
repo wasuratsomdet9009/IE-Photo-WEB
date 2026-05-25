@@ -86,6 +86,7 @@ require_once __DIR__ . '/../includes/header.php';
 
     <!-- Desktop Table -->
     <div class="glass-card desktop-table" style="padding:1rem;">
+        <p class="table-scroll-hint"><i class="ph ph-arrow-left"></i> เลื่อนดูข้อมูลเพิ่มเติม <i class="ph ph-arrow-right"></i></p>
         <div class="table-responsive">
             <table class="glass-table">
                 <thead><tr><th>ID</th><th>ประเภท</th><th>รายการ</th><th>ผู้รับผิดชอบ</th><th>ระยะเวลา</th><th>สถานะ</th><th>จัดการ</th></tr></thead>

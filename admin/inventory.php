@@ -89,8 +89,8 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-<div class="flex-between" style="margin-bottom:1rem;">
-    <h3 style="font-size:1.1rem;margin:0;">รายการอุปกรณ์ (<?php echo count($equipments); ?>)</h3>
+<div class="flex-between" style="margin-bottom:1rem;gap:.6rem;">
+    <h3 style="font-size:1.1rem;margin:0;flex:1;">รายการอุปกรณ์ (<?php echo count($equipments); ?>)</h3>
     <button class="btn btn-primary btn-sm" onclick="toggleAddForm()"><i class="ph-bold ph-plus"></i> เพิ่มอุปกรณ์</button>
 </div>
 
@@ -100,17 +100,18 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- Add Form -->
 <div id="addForm" class="glass-card" style="display:none;margin-bottom:1.5rem;border:2px solid var(--primary);">
     <h3 style="font-size:1rem;margin-bottom:1rem;"><i class="ph-bold ph-plus-circle"></i> เพิ่มอุปกรณ์ใหม่</h3>
-    <form method="POST" class="form-row">
+    <form method="POST" class="form-row add-form-row">
         <div class="form-group" style="flex:2;margin-bottom:0;"><label>ชื่ออุปกรณ์</label><input type="text" name="name" class="form-control" required placeholder="เช่น Sony A7IV"></div>
         <div class="form-group" style="flex:1;margin-bottom:0;"><label>ประเภท</label>
             <select name="type" class="form-control" required><option value="camera">📷 กล้อง</option><option value="lens">🔍 เลนส์</option><option value="accessory">📦 อุปกรณ์เสริม</option></select>
         </div>
-        <div style="display:flex;gap:.5rem;align-self:flex-end;"><button type="submit" name="add_equipment" class="btn btn-success btn-sm">บันทึก</button><button type="button" class="btn btn-outline btn-sm" onclick="toggleAddForm()">ยกเลิก</button></div>
+        <div class="add-form-actions" style="align-self:flex-end;"><button type="submit" name="add_equipment" class="btn btn-success btn-sm">บันทึก</button><button type="button" class="btn btn-outline btn-sm" onclick="toggleAddForm()">ยกเลิก</button></div>
     </form>
 </div>
 
 <!-- Desktop Table -->
 <div class="glass-card desktop-table" style="padding:1.2rem;">
+    <p class="table-scroll-hint"><i class="ph ph-arrow-left"></i> เลื่อนดูข้อมูลเพิ่มเติม <i class="ph ph-arrow-right"></i></p>
     <div class="table-responsive">
         <table class="glass-table">
             <thead><tr><th>ID</th><th>ประเภท</th><th>ชื่อ</th><th>สถานะ</th><th>เปลี่ยนสถานะ</th><th>จัดการ</th></tr></thead>

@@ -172,8 +172,8 @@ require_once __DIR__ . '/../includes/header.php';
     <p>ตรวจสอบ อนุมัติ หรือปฏิเสธคำขอการใช้งาน</p>
 </div>
 
-<div class="flex-between" style="margin-bottom:1.2rem;flex-wrap:wrap;gap:.8rem;">
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+<div class="flex-between" style="margin-bottom:1.2rem;">
+    <div class="filter-bar">
         <a href="bookings.php" class="btn <?php echo $filter==='all'?'btn-primary':'btn-outline'; ?> btn-sm">ทั้งหมด</a>
         <a href="bookings.php?filter=pending" class="btn <?php echo $filter==='pending'?'btn-primary':'btn-outline'; ?> btn-sm">รอตรวจสอบ</a>
         <a href="bookings.php?filter=approved" class="btn <?php echo $filter==='approved'?'btn-primary':'btn-outline'; ?> btn-sm">อนุมัติแล้ว</a>
@@ -189,6 +189,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 <!-- Desktop Table -->
 <div class="glass-card desktop-table" style="padding:1rem;">
+    <p class="table-scroll-hint"><i class="ph ph-arrow-left"></i> เลื่อนดูข้อมูลเพิ่มเติม <i class="ph ph-arrow-right"></i></p>
     <div class="table-responsive">
         <table class="glass-table">
             <thead><tr>

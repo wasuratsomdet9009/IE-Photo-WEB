@@ -128,8 +128,8 @@ require_once __DIR__ . '/../includes/header.php';
     <p>สร้าง มอบหมาย และติดตามงานของสมาชิกในทีม</p>
 </div>
 
-<div class="flex-between" style="margin-bottom:1rem;flex-wrap:wrap;gap:.8rem;">
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+<div class="flex-between" style="margin-bottom:1rem;">
+    <div class="filter-bar">
         <a href="tasks.php" class="btn <?php echo $filter==='all'?'btn-primary':'btn-outline'; ?> btn-sm">ทั้งหมด</a>
         <a href="tasks.php?filter=pending" class="btn <?php echo $filter==='pending'?'btn-primary':'btn-outline'; ?> btn-sm">รอดำเนินการ</a>
         <a href="tasks.php?filter=in_progress" class="btn <?php echo $filter==='in_progress'?'btn-primary':'btn-outline'; ?> btn-sm">กำลังทำ</a>
@@ -166,7 +166,7 @@ require_once __DIR__ . '/../includes/header.php';
                 </select>
             </div>
         </div>
-        <div style="display:flex;gap:.5rem;">
+        <div class="add-form-actions">
             <button type="submit" name="create_task" class="btn btn-success btn-sm">สร้างงาน</button>
             <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('createForm').style.display='none'">ยกเลิก</button>
         </div>
@@ -177,7 +177,7 @@ require_once __DIR__ . '/../includes/header.php';
 <?php if(empty($tasks)):?>
     <div class="glass-card empty-state"><i class="ph ph-kanban"></i><p class="text-muted">ยังไม่มีงานในระบบ</p></div>
 <?php else:?>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem;">
+    <div class="tasks-grid">
     <?php foreach($tasks as $t):?>
         <?php
             $sLabel='รอดำเนินการ';$sBadge='badge-pending';$sIcon='⏳';

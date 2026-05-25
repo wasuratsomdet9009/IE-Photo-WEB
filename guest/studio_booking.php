@@ -83,7 +83,7 @@ require_once __DIR__ . '/../includes/header.php';
         <p>เลือกสตูดิโอและวันเวลาที่ต้องการด้านล่าง</p>
     </div>
 
-    <div class="grid-2">
+    <div class="studio-booking-grid">
         <!-- Studio Previews -->
         <div class="glass-card animate-in">
             <h3 style="font-size:1.1rem;margin-bottom:1.2rem;"><i class="ph-bold ph-images"></i> ตัวอย่างห้องสตูดิโอ</h3>
