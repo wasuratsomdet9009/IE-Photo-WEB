@@ -779,6 +779,20 @@ textarea.form-control{resize:vertical;min-height:80px}
     .modal-overlay,.modal-legacy{
         padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + 1rem) !important
     }
+    /* mobile-cards: bottom padding เพิ่มให้ card ล่างสุดไม่ถูก bottom-nav บัง */
+    .mobile-cards{
+        padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + 1.5rem) !important
+    }
+}
+
+/* === ซ่อน bottom-nav ทันทีที่ modal เปิด (CSS :has) ===
+   ป้องกัน bottom-nav บัง/ดัก touch ขณะ modal แสดงผล */
+@supports selector(:has(.x)) {
+    body:has(.modal-overlay.open) #bottom-nav,
+    body:has(.modal-legacy.open) #bottom-nav {
+        pointer-events: none !important;
+        visibility: hidden;
+    }
 }
 
 /* note: removed 480–600 form-row:row override — it conflicted with .add-form-row column layout */

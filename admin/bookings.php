@@ -294,14 +294,18 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
+var _bn = document.getElementById('bottom-nav');
 function openReturnModal(bookingId) {
     document.getElementById('return_booking_id').value = bookingId;
     document.getElementById('returnModal').classList.add('open');
     document.body.style.overflow = 'hidden';
+    /* ซ่อน bottom-nav ป้องกันบัง/ดัก touch บน Android WebView */
+    if (_bn) { _bn.style.pointerEvents = 'none'; _bn.style.visibility = 'hidden'; }
 }
 function closeReturnModal() {
     document.getElementById('returnModal').classList.remove('open');
     document.body.style.overflow = '';
+    if (_bn) { _bn.style.pointerEvents = ''; _bn.style.visibility = ''; }
 }
 document.getElementById('returnModal').addEventListener('click', function(e) {
     if (e.target === this) closeReturnModal();
