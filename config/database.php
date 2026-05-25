@@ -15,12 +15,18 @@ $port     = getenv('MYSQLPORT')     ?: getenv('DB_PORT')     ?: '3306';
 $charset  = 'utf8mb4';
 
 $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=$charset";
+
+// Enable SSL for Railway MySQL (required for caching_sha2_password without RSA exchange)
+$sslCa = file_exists('/etc/ssl/certs/ca-certificates.crt') ? '/etc/ssl/certs/ca-certificates.crt' : '';
 $options = [
-    PDO::ATTR_ERRMODE                  => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE       => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES         => false,
+    PDO::ATTR_ERRMODE                      => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE           => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES             => false,
     PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
 ];
+if ($sslCa) {
+    $options[PDO::MYSQL_ATTR_SSL_CA] = $sslCa;
+}
 
 try {
     $pdo = new PDO($dsn, $username, $password, $options);

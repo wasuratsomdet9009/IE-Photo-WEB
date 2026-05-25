@@ -1,9 +1,9 @@
 FROM php:8.2-cli
 
-# Install system dependencies for GD and mbstring
+# Install system dependencies for GD, mbstring, and SSL
 RUN apt-get update && apt-get install -y \
     libpng-dev libjpeg-dev libwebp-dev libfreetype6-dev \
-    libonig-dev \
+    libonig-dev ca-certificates openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions (fileinfo & pdo are bundled, no separate install needed)
