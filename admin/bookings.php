@@ -268,7 +268,7 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <!-- Return Modal -->
-<div id="returnModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);display:none;justify-content:center;align-items:center;padding:1rem;">
+<div id="returnModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);justify-content:center;align-items:center;padding:1rem;">
     <div class="glass-card" style="max-width:450px;width:100%;position:relative;">
         <button onclick="closeReturnModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);"><i class="ph-bold ph-x"></i></button>
         <h3 style="font-size:1.1rem;margin-bottom:1rem;"><i class="ph-bold ph-camera"></i> คืนอุปกรณ์พร้อมหลักฐาน</h3>
@@ -280,7 +280,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="upload-zone">
                     <i class="ph-bold ph-camera"></i>
                     <p>ถ่ายรูปอุปกรณ์เพื่อยืนยันสภาพ</p>
-                    <input type="file" name="return_image" accept="image/*" capture="environment">
+                    <input type="file" name="return_image" accept="image/*">
                 </div>
             </div>
             <button type="submit" class="btn btn-primary w-100"><i class="ph-bold ph-check-circle"></i> ยืนยันการคืน</button>

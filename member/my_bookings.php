@@ -171,7 +171,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="upload-zone">
                     <i class="ph-bold ph-camera" style="font-size:2.5rem;"></i>
                     <p>ถ่ายรูปอุปกรณ์ หรือเลือกจากคลัง</p>
-                    <input type="file" name="return_image" accept="image/*" capture="environment" required>
+                    <input type="file" name="return_image" accept="image/*">
                 </div>
             </div>
             <button type="submit" class="btn btn-primary w-100"><i class="ph-bold ph-check-circle"></i> ส่งคืนอุปกรณ์</button>
