@@ -6,13 +6,15 @@ ini_set('display_errors', $isLocalhost ? 1 : 0);
 ini_set('display_startup_errors', $isLocalhost ? 1 : 0);
 error_reporting(E_ALL);
 
-$host = 'localhost';
-$dbname = 'iephotoo_booking';
-$username = 'root'; // localhost
-$password = '';    // localhost
-$charset = 'utf8mb4';
+// Railway MySQL env vars (fallback to localhost for development)
+$host     = getenv('MYSQLHOST')     ?: getenv('DB_HOST')     ?: 'localhost';
+$dbname   = getenv('MYSQLDATABASE') ?: getenv('DB_NAME')     ?: 'iephotoo_booking';
+$username = getenv('MYSQLUSER')     ?: getenv('DB_USER')     ?: 'root';
+$password = getenv('MYSQLPASSWORD') ?: getenv('DB_PASS')     ?: '';
+$port     = getenv('MYSQLPORT')     ?: getenv('DB_PORT')     ?: '3306';
+$charset  = 'utf8mb4';
 
-$dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";
+$dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=$charset";
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
