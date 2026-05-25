@@ -35,8 +35,10 @@
 html{
     scroll-behavior:smooth;
     -webkit-text-size-adjust:100%;
-    /* overflow-x:hidden บน html แทน body — iOS Safari จะไม่กระทบ position:fixed */
+    /* overflow-x:hidden บน html — ป้องกัน horizontal scroll ทุก browser รวม Android WebView */
     overflow-x:hidden;
+    /* max-width:100vw บน html ป้องกัน WebView ขยาย scroll area */
+    max-width:100vw;
 }
 body{
     font-family:'Kanit','Inter',sans-serif;
@@ -408,11 +410,13 @@ textarea.form-control{resize:vertical;min-height:80px}
     .nav-overlay{bottom:calc(var(--bottom-nav-h) + var(--safe-bottom))}
 
     .nav-links{
-        position:fixed;top:0;right:-100%;
+        position:fixed;top:0;right:0;
         width:80%;max-width:340px;height:100vh;height:100dvh;
         background:#fff;
         flex-direction:column;justify-content:flex-start;align-items:stretch;
-        transition:right .35s cubic-bezier(.4,0,.2,1);
+        /* ใช้ transform แทน right:-100% — ป้องกัน horizontal scroll ใน Android WebView/Messenger */
+        transform:translateX(100%);
+        transition:transform .35s cubic-bezier(.4,0,.2,1);
         box-shadow:-8px 0 30px rgba(0,0,0,.12);
         /* z-index สูงกว่า overlay(900) และ bottom-nav(1050) */
         z-index:1060;
@@ -421,8 +425,12 @@ textarea.form-control{resize:vertical;min-height:80px}
         /* กันไม่ให้ stacking context ของ parent มาบัง */
         pointer-events:auto;
         isolation:isolate;
+        /* ป้องกัน sub-pixel rendering bug บน Android */
+        will-change:transform;
+        -webkit-backface-visibility:hidden;
+        backface-visibility:hidden;
     }
-    .nav-links.active{right:0}
+    .nav-links.active{transform:translateX(0)}
     .nav-links a{
         display:flex;align-items:center;
         font-size:.95rem;padding:.85rem 1.5rem;width:100%;
