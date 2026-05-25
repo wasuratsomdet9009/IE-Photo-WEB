@@ -130,6 +130,8 @@ $where = '';
 if ($filter === 'pending') $where = "WHERE b.status = 'pending'";
 elseif ($filter === 'approved') $where = "WHERE b.status = 'approved'";
 elseif ($filter === 'rejected') $where = "WHERE b.status = 'rejected'";
+elseif ($filter === 'pending_return') $where = "WHERE b.status = 'pending_return'";
+elseif ($filter === 'returned') $where = "WHERE b.status = 'returned'";
 
 $query = "
     SELECT b.id, b.booking_type, b.start_datetime, b.end_datetime, b.status,
@@ -175,6 +177,8 @@ require_once __DIR__ . '/../includes/header.php';
         <a href="bookings.php" class="btn <?php echo $filter==='all'?'btn-primary':'btn-outline'; ?> btn-sm">ทั้งหมด</a>
         <a href="bookings.php?filter=pending" class="btn <?php echo $filter==='pending'?'btn-primary':'btn-outline'; ?> btn-sm">รอตรวจสอบ</a>
         <a href="bookings.php?filter=approved" class="btn <?php echo $filter==='approved'?'btn-primary':'btn-outline'; ?> btn-sm">อนุมัติแล้ว</a>
+        <a href="bookings.php?filter=pending_return" class="btn <?php echo $filter==='pending_return'?'btn-primary':'btn-outline'; ?> btn-sm" style="<?php echo $filter==='pending_return'?'':'color:var(--warning);border-color:var(--warning);'; ?>">รอตรวจคืน</a>
+        <a href="bookings.php?filter=returned" class="btn <?php echo $filter==='returned'?'btn-primary':'btn-outline'; ?> btn-sm">คืนแล้ว</a>
         <a href="bookings.php?filter=rejected" class="btn <?php echo $filter==='rejected'?'btn-primary':'btn-outline'; ?> btn-sm">ปฏิเสธแล้ว</a>
     </div>
     <a href="bookings.php?export=csv" class="btn btn-outline btn-sm"><i class="ph-bold ph-download-simple"></i> ส่งออก CSV</a>

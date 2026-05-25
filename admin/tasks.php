@@ -56,9 +56,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $userStmt->execute([$assigned_to]);
                 $assignee = $userStmt->fetch();
                 if ($assignee && !empty($assignee['email'])) {
-                    // ใช้ student_id จริงของผู้รับมอบหมาย ไม่ใช่ hardcode 'Admin'
-                    $body = getBookingPendingEmailTemplate($assignee['student_id'], "งานใหม่: {$title}", 'task');
-                    sendEmail($assignee['email'], "IE-Photo: คุณได้รับมอบหมายงานใหม่ — {$title}", $body);
+                    $taskBody = "
+                    <div style='font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px;border:1px solid #e0e0e0;border-radius:12px;'>
+                        <div style='background:linear-gradient(135deg,#F2531C,#ff6b35);padding:20px;border-radius:8px;text-align:center;margin-bottom:20px;'>
+                            <h2 style='color:#fff;margin:0;font-size:20px;'>📋 คุณได้รับมอบหมายงานใหม่</h2>
+                        </div>
+                        <p>สวัสดี <strong>" . htmlspecialchars($assignee['student_id']) . "</strong>,</p>
+                        <p>แอดมินได้มอบหมายงานให้คุณ:</p>
+                        <div style='background:#f8f9fa;border-radius:8px;padding:16px;border-left:4px solid #F2531C;margin:16px 0;'>
+                            <strong>" . htmlspecialchars($title) . "</strong>
+                            " . ($description ? "<p style='margin:8px 0 0;color:#666;font-size:14px;'>" . htmlspecialchars($description) . "</p>" : "") . "
+                        </div>
+                        <p style='font-size:13px;color:#666;'>กรุณาเข้าสู่ระบบเพื่อดูรายละเอียดและอัปเดตสถานะงาน</p>
+                    </div>";
+                    sendEmail($assignee['email'], "IE-Photo: คุณได้รับมอบหมายงานใหม่ — {$title}", $taskBody);
                 }
             } else { $error = 'สร้างงานไม่สำเร็จ'; }
         } else { $error = 'กรุณากรอกชื่องานและเลือกผู้รับผิดชอบ'; }

@@ -101,6 +101,9 @@ require_once __DIR__ . '/../includes/header.php';
                     $label='รอตรวจสอบ';$badgeClass='badge-pending';
                     if($rb['status']=='approved'){$label='อนุมัติแล้ว';$badgeClass='badge-approved';}
                     if($rb['status']=='rejected'){$label='ปฏิเสธแล้ว';$badgeClass='badge-rejected';}
+                    if($rb['status']=='pending_return'){$label='รอตรวจคืน';$badgeClass='badge-pending';}
+                    if($rb['status']=='returned'){$label='คืนแล้ว';$badgeClass='badge-returned';}
+                    if($rb['status']=='cancelled'){$label='ยกเลิก';$badgeClass='badge-cancelled';}
                 ?>
                 <tr>
                     <td><strong>#<?php echo $rb['id'];?></strong></td>
@@ -118,7 +121,7 @@ require_once __DIR__ . '/../includes/header.php';
     <!-- Mobile -->
     <div class="mobile-cards">
         <?php foreach($recent_bookings as $rb):?>
-            <?php $label='รอตรวจสอบ';$badgeClass='badge-pending';if($rb['status']=='approved'){$label='อนุมัติ';$badgeClass='badge-approved';}if($rb['status']=='rejected'){$label='ปฏิเสธ';$badgeClass='badge-rejected';}?>
+            <?php $label='รอตรวจสอบ';$badgeClass='badge-pending';if($rb['status']=='approved'){$label='อนุมัติ';$badgeClass='badge-approved';}if($rb['status']=='rejected'){$label='ปฏิเสธ';$badgeClass='badge-rejected';}if($rb['status']=='pending_return'){$label='รอตรวจคืน';$badgeClass='badge-pending';}if($rb['status']=='returned'){$label='คืนแล้ว';$badgeClass='badge-returned';}if($rb['status']=='cancelled'){$label='ยกเลิก';$badgeClass='badge-cancelled';}?>
             <div class="mobile-card">
                 <div class="mc-header"><strong>#<?php echo $rb['id'];?></strong><span class="badge <?php echo $badgeClass;?>"><?php echo $label;?></span></div>
                 <div class="mc-row"><span class="mc-label">ประเภท</span><span><?php echo $rb['booking_type']==='equipment'?'📦':'🎬';?></span></div>

@@ -83,9 +83,7 @@ $page_title = 'จัดการสมาชิก';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="bg-orbs"></div>
-<div class="main-content animate-in">
-    <div class="page-header">
+<div class="page-header">
         <h2><i class="ph-bold ph-users"></i> จัดการสมาชิก</h2>
         <p>เปลี่ยนบทบาท · รีเซ็ตรหัสผ่าน · ลบบัญชี</p>
     </div>
@@ -221,7 +219,6 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
         <?php endforeach; ?>
     </div>
-</div>
 
 <!-- ═══ Modal: รีเซ็ตรหัสผ่าน ══════════════════════════════════════════════ -->
 <div id="modal-reset" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:1rem;">

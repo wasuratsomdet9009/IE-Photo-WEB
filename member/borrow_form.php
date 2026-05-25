@@ -228,7 +228,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="upload-zone" id="drop-zone">
                     <i class="ph-bold ph-image"></i>
                     <p>ถ่ายรูป/ลากไฟล์ หรือคลิกเพื่อเลือก</p>
-                    <input type="file" id="form_image" name="form_image" required accept="image/*, .pdf" capture="environment">
+                    <input type="file" id="form_image" name="form_image" required accept="image/*,.pdf">
                     <span id="file-name-display" class="badge" style="background:var(--primary);color:#fff;display:none;margin-top:8px;"></span>
                 </div>
                 <small class="text-muted" style="font-size:.8rem;display:block;margin-top:.3rem;"><i class="ph ph-info"></i> รองรับ JPG, PNG, PDF</small>
