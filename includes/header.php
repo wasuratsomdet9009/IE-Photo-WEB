@@ -36,11 +36,6 @@ function isActive($page) {
             <a href="<?php echo $base_url; ?>auth/login.php" class="nav-brand">
                 <i class="ph-bold ph-camera" style="margin-right:3px"></i> IE-PHOTO
             </a>
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <button class="mobile-toggle" id="mobile-toggle-btn" aria-label="Menu">
-                    <i class="ph-bold ph-list"></i>
-                </button>
-            <?php endif; ?>
             <div class="nav-links" id="nav-links">
                 <?php if(isset($_SESSION['user_id'])): ?>
                     <?php if($_SESSION['role'] === 'admin'): ?>
@@ -65,7 +60,7 @@ function isActive($page) {
                     <div class="nav-profile">
                         <a href="<?php echo $base_url; ?>member/my_bookings.php"><i class="ph-bold ph-list-dashes"></i> การจองของฉัน</a>
                         <a href="<?php echo $base_url; ?>member/profile.php"><i class="ph-bold ph-user-circle"></i> โปรไฟล์</a>
-                        <a href="<?php echo $base_url; ?>auth/logout.php" class="btn btn-outline btn-sm" style="width:100%;justify-content:center;">ออกจากระบบ</a>
+                        <a href="<?php echo $base_url; ?>auth/logout.php" class="btn btn-outline btn-sm">ออกจากระบบ</a>
                     </div>
                 <?php else: ?>
                     <a href="<?php echo $base_url; ?>guest/studio_booking.php"><i class="ph ph-calendar-plus"></i> จองสตูดิโอ</a>
@@ -76,81 +71,5 @@ function isActive($page) {
         </div>
     </nav>
 
-    <!-- Nav Overlay (Mobile) -->
-    <div class="nav-overlay" id="nav-overlay"></div>
-
     <!-- Main Content -->
     <main class="main-content">
-
-    <script>
-    (function() {
-        function initNav() {
-            var toggleBtn = document.getElementById('mobile-toggle-btn');
-            var navLinks  = document.getElementById('nav-links');
-            var overlay   = document.getElementById('nav-overlay');
-            if (!toggleBtn || !navLinks) return;
-
-            /* ปิดเมนู */
-            function closeMenu() {
-                navLinks.classList.remove('active');
-                if (overlay) overlay.classList.remove('active');
-                var icon = toggleBtn.querySelector('i');
-                if (icon) { icon.classList.remove('ph-x'); icon.classList.add('ph-list'); }
-                /* ใช้ class แทน overflow:hidden โดยตรง — iOS Safari bug:
-                   overflow:hidden บน body ทำให้ position:fixed (bottom-nav) รับ touch ไม่ได้ */
-                document.documentElement.classList.remove('menu-open');
-            }
-
-            /* เปิด/ปิดเมนู */
-            function onToggle(e) {
-                e.stopPropagation();
-                var isOpen = navLinks.classList.toggle('active');
-                if (overlay) overlay.classList.toggle('active', isOpen);
-                var icon = toggleBtn.querySelector('i');
-                if (icon) {
-                    icon.classList.toggle('ph-list', !isOpen);
-                    icon.classList.toggle('ph-x', isOpen);
-                }
-                document.documentElement.classList.toggle('menu-open', isOpen);
-            }
-
-            /* ใช้ทั้ง click และ touchend เพื่อรองรับทุก device */
-            toggleBtn.addEventListener('click', onToggle);
-
-            /* ปิดเมื่อกด overlay */
-            if (overlay) {
-                overlay.addEventListener('click', closeMenu);
-                overlay.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    closeMenu();
-                });
-            }
-
-            /* กดลิงก์ในเมนู → ปิดเมนูแล้วค่อย navigate */
-            navLinks.querySelectorAll('a').forEach(function(a) {
-                a.addEventListener('click', function(e) {
-                    /* หยุด event ไม่ให้ bubble ขึ้นไปโดน overlay */
-                    e.stopPropagation();
-                    closeMenu();
-                    /* ถ้า href ปกติ ให้ browser navigate ตามเดิม */
-                });
-            });
-
-            /* ปิดเมื่อกด Escape */
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') closeMenu();
-            });
-
-            /* ปิดเมื่อหมุนจอ */
-            window.addEventListener('orientationchange', function() {
-                setTimeout(closeMenu, 300);
-            });
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initNav);
-        } else {
-            initNav();
-        }
-    })();
-    </script>
