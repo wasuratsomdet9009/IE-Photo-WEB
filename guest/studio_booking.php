@@ -77,7 +77,7 @@ $base_url = '../';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div style="max-width:900px; margin:0 auto;">
+<div class="page-container">
     <div class="page-header">
         <h2>จองการใช้งานห้องสตูดิโอ</h2>
         <p>เลือกสตูดิโอและวันเวลาที่ต้องการด้านล่าง</p>

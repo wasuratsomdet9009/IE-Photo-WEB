@@ -44,7 +44,7 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 <?php endif; ?>
 
-<div style="max-width:700px; margin:0 auto;">
+<div class="page-container-md">
     <?php if(empty($feeds)): ?>
         <div class="glass-card empty-state">
             <i class="ph ph-calendar-blank"></i>

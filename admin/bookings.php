@@ -272,10 +272,10 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <!-- Return Modal -->
-<div id="returnModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);justify-content:center;align-items:center;padding:1rem;">
-    <div class="glass-card" style="max-width:450px;width:100%;position:relative;">
-        <button onclick="closeReturnModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);"><i class="ph-bold ph-x"></i></button>
-        <h3 style="font-size:1.1rem;margin-bottom:1rem;"><i class="ph-bold ph-camera"></i> คืนอุปกรณ์พร้อมหลักฐาน</h3>
+<div id="returnModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="adminReturnTitle">
+    <div class="glass-card modal-inner" style="max-width:450px;">
+        <button onclick="closeReturnModal()" aria-label="ปิด" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;"><i class="ph-bold ph-x"></i></button>
+        <h3 id="adminReturnTitle" style="font-size:1.1rem;margin-bottom:1rem;"><i class="ph-bold ph-camera"></i> คืนอุปกรณ์พร้อมหลักฐาน</h3>
         <form method="POST" enctype="multipart/form-data" id="returnForm">
             <input type="hidden" name="booking_id" id="return_booking_id" value="">
             <input type="hidden" name="action" value="return">
@@ -295,15 +295,17 @@ require_once __DIR__ . '/../includes/header.php';
 <script>
 function openReturnModal(bookingId) {
     document.getElementById('return_booking_id').value = bookingId;
-    const modal = document.getElementById('returnModal');
-    modal.style.display = 'flex';
+    document.getElementById('returnModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
 }
 function closeReturnModal() {
-    document.getElementById('returnModal').style.display = 'none';
+    document.getElementById('returnModal').classList.remove('open');
+    document.body.style.overflow = '';
 }
 document.getElementById('returnModal').addEventListener('click', function(e) {
     if (e.target === this) closeReturnModal();
 });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeReturnModal(); });
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

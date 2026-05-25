@@ -145,7 +145,7 @@ $base_url = '../';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div style="max-width:700px; margin:0 auto;">
+<div class="page-container-md">
     <div class="page-header">
         <h2>ยืมอุปกรณ์ถ่ายภาพ</h2>
         <p>เลือกอุปกรณ์ที่ต้องการ (เลือกได้หลายชิ้น) กำหนดผู้รับผิดชอบ แนบเอกสาร</p>

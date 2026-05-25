@@ -1,19 +1,19 @@
 <?php
 // router.php — PHP built-in server router for Railway deployment
-// Ensures "/" and other paths are routed correctly
+// Handles: static files, PHP files, directory index, and the root "/"
 
 $uri = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+$file = __DIR__ . $uri;
 
-// Serve existing static files (CSS, JS, images, fonts) directly
-if ($uri !== '/' && file_exists(__DIR__ . $uri) && !is_dir(__DIR__ . $uri)) {
-    return false; // let PHP built-in server handle it natively
+// 1. Existing non-directory files → serve natively (CSS/JS/images/PHP pages)
+if ($uri !== '/' && file_exists($file) && !is_dir($file)) {
+    return false;
 }
 
-// For directories, look for index.php inside
-if (is_dir(__DIR__ . $uri)) {
-    $index = rtrim(__DIR__ . $uri, '/') . '/index.php';
+// 2. Directory → look for index.php inside
+if (is_dir($file)) {
+    $index = rtrim($file, '/') . '/index.php';
     if (file_exists($index)) {
-        // Adjust script path and include
         $_SERVER['SCRIPT_FILENAME'] = $index;
         $_SERVER['SCRIPT_NAME']     = rtrim($uri, '/') . '/index.php';
         require $index;
@@ -21,7 +21,7 @@ if (is_dir(__DIR__ . $uri)) {
     }
 }
 
-// Fall back to root index.php (handles /)
+// 3. Root "/" (or anything not matched) → root index.php
 $_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/index.php';
 $_SERVER['SCRIPT_NAME']     = '/index.php';
 require __DIR__ . '/index.php';

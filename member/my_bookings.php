@@ -75,7 +75,7 @@ $base_url = '../';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div style="max-width:900px;margin:0 auto;">
+<div class="page-container">
     <div class="page-header">
         <h2>การจองของฉัน</h2>
         <p>ประวัติการยืมอุปกรณ์และจองสตูดิโอ</p>
@@ -159,10 +159,10 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <!-- Return Modal -->
-<div id="returnModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);justify-content:center;align-items:center;padding:1rem;">
-    <div class="glass-card" style="max-width:420px;width:100%;position:relative;">
-        <button onclick="closeReturnModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);"><i class="ph-bold ph-x"></i></button>
-        <h3 style="font-size:1.1rem;margin-bottom:1rem;"><i class="ph-bold ph-camera"></i> คืนอุปกรณ์</h3>
+<div id="returnModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="returnModalTitle">
+    <div class="glass-card modal-inner" style="max-width:420px;">
+        <button onclick="closeReturnModal()" aria-label="ปิด" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;"><i class="ph-bold ph-x"></i></button>
+        <h3 id="returnModalTitle" style="font-size:1.1rem;margin-bottom:1rem;"><i class="ph-bold ph-camera"></i> คืนอุปกรณ์</h3>
         <p style="font-size:.88rem;color:var(--text-secondary);margin-bottom:1rem;">ถ่ายรูปอุปกรณ์เพื่อยืนยันสภาพก่อนส่งคืน</p>
         <form method="POST" enctype="multipart/form-data">
             <input type="hidden" name="booking_id" id="return_booking_id" value="">
@@ -180,9 +180,17 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
-function openReturnModal(id){document.getElementById('return_booking_id').value=id;document.getElementById('returnModal').style.display='flex';}
-function closeReturnModal(){document.getElementById('returnModal').style.display='none';}
+function openReturnModal(id){
+    document.getElementById('return_booking_id').value=id;
+    document.getElementById('returnModal').classList.add('open');
+    document.body.style.overflow='hidden';
+}
+function closeReturnModal(){
+    document.getElementById('returnModal').classList.remove('open');
+    document.body.style.overflow='';
+}
 document.getElementById('returnModal').addEventListener('click',function(e){if(e.target===this)closeReturnModal();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeReturnModal();});
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
