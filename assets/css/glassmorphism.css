@@ -473,7 +473,7 @@ textarea.form-control{resize:vertical;min-height:80px}
         position:fixed;top:0;left:0;right:0;
         bottom:calc(var(--bottom-nav-h) + var(--safe-bottom));
         z-index:900;
-        background:rgba(0,0,0,.25);
+        background:rgba(0,0,0,.4);
         opacity:0;visibility:hidden;
         transition:opacity .3s,visibility .3s;
         pointer-events:none;
@@ -494,10 +494,11 @@ textarea.form-control{resize:vertical;min-height:80px}
     /* navbar สูงขึ้นนิด เพื่อให้ touch target สบาย */
     .nav-container{padding:.6rem 1rem}
 
-    /* ── nav-links: always-visible horizontal scrollable bar ── */
+    /* ── nav-links: always-visible horizontal scrollable bar (non-admin) ── */
+    /* ห้ามใส่ !important — จะ override .is-admin .nav-links{transform:translateX(100%)} */
     .nav-links{
         position:static;
-        transform:none !important;
+        transform:none;
         width:auto;max-width:none;height:auto;
         flex-direction:row;justify-content:flex-end;align-items:center;
         flex-wrap:nowrap;
