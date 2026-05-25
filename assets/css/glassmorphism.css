@@ -393,8 +393,8 @@ textarea.form-control{resize:vertical;min-height:80px}
 .flex-between{display:flex;justify-content:space-between;align-items:center}
 .flex-gap{display:flex;gap:.8rem}
 .grid-2{display:grid;grid-template-columns:1fr;gap:1rem}
-.form-row{display:flex;flex-direction:column;gap:.5rem}
-.form-row > *{flex:1}
+.form-row{display:flex;flex-direction:column;gap:1rem}
+.form-row > *{flex:1;min-width:0}
 .empty-state{text-align:center;padding:2.5rem 1rem}
 .empty-state i{font-size:2.5rem;color:var(--text-muted);opacity:.3;margin-bottom:.8rem;display:block}
 
@@ -1036,3 +1036,211 @@ img.lazy{
     opacity:0;transition:opacity .4s;
 }
 img.lazy.loaded{ opacity:1 }
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPREHENSIVE RESPONSIVE — ALL DEVICE SIZES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* === Global overflow-wrap for Thai text === */
+body, .glass-card, .mobile-card, .feed-body, .mc-row, .mc-header{
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+/* Long emails / IDs in mc-row won't overflow card edge */
+.mc-row span:last-child{ overflow-wrap: anywhere; min-width:0 }
+.mc-header strong{ overflow-wrap: anywhere; min-width:0 }
+
+/* === form-row: remove double-spacing between stacked form-groups === */
+/* form-group.margin-bottom + form-row.gap would double-space — reset margin when inside form-row */
+.form-row > .form-group{ margin-bottom:0 }
+/* Restore standard margin for last child so space after form-row is normal */
+.form-row > .form-group:last-child{ margin-bottom:0 }
+
+/* === nav-brand shrink on very narrow screens === */
+@media (max-width:360px){
+    .nav-brand{ font-size:.88rem }
+    .nav-container{ padding:.45rem .6rem }
+}
+
+/* === auth-wrapper: tighter padding at small sizes === */
+@media (max-width:360px){
+    .auth-wrapper{ padding:.8rem .4rem }
+    .auth-wrapper .glass-card{ border-radius:14px }
+}
+
+/* === Bottom-nav labels: truncate long text on tiny screens === */
+.bottom-nav a span{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    max-width:56px;
+    display:inline-block;
+}
+@media (max-width:360px){
+    .bottom-nav a span{ max-width:44px; font-size:.58rem }
+}
+@media (max-width:320px){
+    .bottom-nav a span{ display:none }  /* hide labels — show only icons at 320px */
+}
+
+/* === Filter bar: tighter on small phones === */
+@media (max-width:420px){
+    .filter-bar .btn-sm{
+        font-size:.75rem;
+        padding:.35rem .55rem;
+    }
+}
+@media (max-width:360px){
+    .filter-bar .btn-sm{
+        font-size:.72rem;
+        padding:.3rem .45rem;
+    }
+}
+
+/* === flex-between: prevent overflow on very small screens === */
+@media (max-width:420px){
+    .flex-between > h3,
+    .flex-between > h2{
+        font-size:1rem;
+    }
+}
+
+/* === Glass card: ensure content never causes horizontal scroll === */
+.glass-card, .mobile-card, .stat-card, .contact-card, .feed-card{
+    min-width:0;
+}
+
+/* === Table responsive: ensure container never overflows === */
+.table-responsive{
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+}
+
+/* === Stats grid: guard against narrow column overflow === */
+.stats-grid .stat-label{
+    font-size: clamp(.68rem, 2.5vw, .82rem);
+}
+.stats-grid .stat-value{
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
+}
+
+/* === Contact cards: ensure avatar doesn't overflow === */
+.contact-avatar{ flex-shrink:0 }
+
+/* === Page header: tighter on medium phones === */
+@media (max-width:600px){
+    .page-header{ margin-bottom:1rem }
+    .page-header h2{ font-size:clamp(1.1rem,5vw,1.4rem) }
+    .page-header p{ font-size:clamp(.78rem,3vw,.9rem) }
+}
+
+/* === glass-card padding: use clamp for smoother scaling === */
+@media (min-width:361px) and (max-width:600px){
+    .glass-card{ padding: clamp(.9rem, 3vw, 1.2rem) }
+}
+
+/* === input-group: prevent @kmitl.ac.th suffix overflow === */
+@media (max-width:360px){
+    .input-group-text{ font-size:.72rem; padding:0 .5rem }
+}
+
+/* === Modal glass-card: ensure full width on small phones === */
+.modal-overlay .glass-card,
+.modal-legacy .glass-card,
+.modal-inner{
+    width:100%;
+    min-width:0;
+}
+
+/* === Upload zone: smaller on mobile === */
+@media (max-width:420px){
+    .upload-zone{ padding:1rem .8rem }
+    .upload-zone i{ font-size:1.5rem }
+}
+
+/* === Feed cards: prevent image overflow === */
+.feed-image{ max-height:220px; object-fit:cover }
+@media (max-width:600px){
+    .feed-image{ max-height:180px }
+}
+
+/* === Stats grid 3-col: clamp text on all sizes === */
+.stats-grid-3 .stat-value{
+    font-size: clamp(.95rem, 3.5vw, 1.5rem);
+}
+.stats-grid-3 .stat-label{
+    font-size: clamp(.65rem, 2vw, .78rem);
+    line-height: 1.2;
+}
+
+/* === Tasks grid: single col on phones, multi-col on desktop === */
+@media (min-width:601px) and (max-width:950px){
+    .tasks-grid{ grid-template-columns: repeat(2,1fr) }
+}
+
+/* === Bottom-nav: ensure safe-area padding on all phones === */
+@media (max-width:950px){
+    .bottom-nav{
+        padding-bottom: max(var(--safe-bottom), 4px);
+    }
+}
+
+/* === Page container: full bleed on very small phones === */
+@media (max-width:320px){
+    .page-container,
+    .page-container-md,
+    .page-container-sm{
+        padding:0;
+    }
+}
+
+/* === Prevent btn overflow in flex containers === */
+.btn{ min-width:0; overflow:hidden; text-overflow:ellipsis }
+/* But keep white-space:nowrap for single-line buttons */
+.btn-sm{ white-space:nowrap }
+
+/* === Logged-out pages: remove bottom padding for bottom-nav === */
+/* bottom-nav only shows when logged in; prevent empty space on login/register/studio pages */
+body:not(:has(.bottom-nav[style*="block"])){
+    /* Note: :has() selector for modern browsers */
+}
+/* Safer approach: handle via body padding only for pages with bottom-nav */
+.bottom-nav + * { /* footer or content after bottom-nav */ }
+
+/* === Responsive images in glass-cards === */
+.glass-card img:not(.contact-avatar):not(#avatar-preview){
+    max-width:100%;
+    height:auto;
+    border-radius:var(--radius-xs);
+}
+
+/* === Fix select overflow in table cells on mobile === */
+.mc-actions select.form-control{
+    font-size:.82rem;
+    min-width:0;
+    flex:1;
+}
+
+/* === Landscape phones: tighter layout === */
+@media (max-width:950px) and (orientation:landscape){
+    .page-header{ margin-bottom:.6rem }
+    .page-header h2{ font-size:1.1rem }
+    .glass-card{ padding:.9rem }
+    .stats-grid{ margin-bottom:1rem }
+}
+
+/* === Wide screens: better content width === */
+@media (min-width:1200px){
+    .page-container{ max-width:960px }
+    .page-container-md{ max-width:720px }
+    .page-container-sm{ max-width:560px }
+}
+
+/* === Ensure form-row responsive at all sizes === */
+/* Default: column (mobile-first) */
+/* 601-950px: row (tablet) — already set */
+/* >950px: row (desktop) — already set */
+/* Explicitly handle 421-600px: ensure column */
+@media (min-width:421px) and (max-width:600px){
+    .form-row{ flex-direction:column !important }
+}
