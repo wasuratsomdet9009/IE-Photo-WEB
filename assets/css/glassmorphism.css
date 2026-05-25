@@ -406,9 +406,83 @@ textarea.form-control{resize:vertical;min-height:80px}
 
 /* ========== RESPONSIVE ========== */
 
+/* ── Admin mobile: hamburger slide panel ── */
+@media (max-width:950px){
+    /* แสดงปุ่ม hamburger เฉพาะ admin */
+    .is-admin .mobile-toggle{
+        display:flex !important;
+        align-items:center;justify-content:center;
+    }
+    /* nav-links กลายเป็น slide panel */
+    .is-admin .nav-links{
+        position:fixed;top:0;right:0;
+        width:80%;max-width:300px;height:100vh;height:100dvh;
+        background:#fff;flex-direction:column;
+        justify-content:flex-start;align-items:stretch;
+        transform:translateX(100%);
+        transition:transform .35s cubic-bezier(.4,0,.2,1);
+        box-shadow:-8px 0 30px rgba(0,0,0,.12);
+        z-index:1060;gap:0;
+        padding:calc(var(--safe-top) + 62px) 0 2rem;
+        overflow-y:auto;-webkit-overflow-scrolling:touch;
+        pointer-events:auto;isolation:isolate;
+        will-change:transform;
+        -webkit-backface-visibility:hidden;backface-visibility:hidden;
+        flex:initial; /* override flex:1 ของ non-admin */
+        scrollbar-width:none;-ms-overflow-style:none;
+    }
+    .is-admin .nav-links::-webkit-scrollbar{display:none}
+    .is-admin .nav-links.active{transform:translateX(0)}
+    /* links ใน slide panel — แสดง icon + text เต็ม */
+    .is-admin .nav-links > a{
+        display:flex;align-items:center;gap:10px;
+        font-size:.9rem;font-weight:500;
+        padding:.8rem 1.3rem;width:100%;
+        border-bottom:1px solid rgba(0,0,0,.04);
+        border-radius:0;white-space:nowrap;
+        min-height:46px;
+        -webkit-tap-highlight-color:transparent;
+        touch-action:manipulation;
+    }
+    .is-admin .nav-links > a i{
+        display:inline !important;
+        width:22px;text-align:center;flex-shrink:0;font-size:1rem;
+    }
+    .is-admin .nav-profile{
+        flex-direction:column;border-left:none;
+        border-top:1px solid var(--border);
+        padding:1rem 1.3rem 0;margin:auto 0 0;
+        width:100%;gap:.5rem;
+    }
+    .is-admin .nav-profile a{
+        width:100%;text-align:center;
+        padding:.65rem;min-height:44px;font-size:.85rem;
+        display:flex !important;align-items:center;justify-content:center;gap:6px;
+    }
+    .is-admin .nav-profile a i{display:inline !important}
+    .is-admin .nav-profile .btn-sm{
+        width:100%;justify-content:center;
+        font-size:.85rem;padding:.6rem;
+    }
+    /* overlay — คืนให้ admin ใช้งานได้ */
+    .is-admin .nav-overlay{
+        display:block;
+        position:fixed;top:0;left:0;right:0;
+        bottom:calc(var(--bottom-nav-h) + var(--safe-bottom));
+        z-index:900;
+        background:rgba(0,0,0,.25);
+        opacity:0;visibility:hidden;
+        transition:opacity .3s,visibility .3s;
+        pointer-events:none;
+    }
+    .is-admin .nav-overlay.active{
+        opacity:1;visibility:visible;pointer-events:auto;
+    }
+}
+
 /* Mobile: ≤ 950px */
 @media (max-width:950px) {
-    /* ซ่อน hamburger — ใช้ top-bar แทน */
+    /* ซ่อน hamburger — ใช้ top-bar แทน (non-admin) */
     .mobile-toggle{display:none !important}
     .bottom-nav{display:block}
     /* overlay ไม่ถูกใช้อีกแล้ว */

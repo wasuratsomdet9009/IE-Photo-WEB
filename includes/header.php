@@ -27,7 +27,7 @@ function isActive($page) {
     <link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/glassmorphism.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
-<body>
+<body<?php if(isset($_SESSION['role']) && $_SESSION['role']==='admin') echo ' class="is-admin"'; ?>>
     <div class="bg-orbs"></div>
 
     <!-- Top Navbar -->
@@ -36,6 +36,11 @@ function isActive($page) {
             <a href="<?php echo $base_url; ?>auth/login.php" class="nav-brand">
                 <i class="ph-bold ph-camera" style="margin-right:3px"></i> IE-PHOTO
             </a>
+            <?php if(isset($_SESSION['role']) && $_SESSION['role']==='admin'): ?>
+            <button class="mobile-toggle" id="mobile-toggle-btn" aria-label="Menu">
+                <i class="ph-bold ph-list"></i>
+            </button>
+            <?php endif; ?>
             <div class="nav-links" id="nav-links">
                 <?php if(isset($_SESSION['user_id'])): ?>
                     <?php if($_SESSION['role'] === 'admin'): ?>
@@ -71,5 +76,43 @@ function isActive($page) {
         </div>
     </nav>
 
+    <!-- Nav Overlay (Admin mobile only) -->
+    <?php if(isset($_SESSION['role']) && $_SESSION['role']==='admin'): ?>
+    <div class="nav-overlay" id="nav-overlay"></div>
+    <?php endif; ?>
+
     <!-- Main Content -->
     <main class="main-content">
+
+    <?php if(isset($_SESSION['role']) && $_SESSION['role']==='admin'): ?>
+    <script>
+    (function(){
+        var btn = document.getElementById('mobile-toggle-btn');
+        var nav = document.getElementById('nav-links');
+        var ov  = document.getElementById('nav-overlay');
+        if(!btn||!nav) return;
+        function close(){
+            nav.classList.remove('active');
+            if(ov) ov.classList.remove('active');
+            var ic=btn.querySelector('i');
+            if(ic){ic.classList.remove('ph-x');ic.classList.add('ph-list');}
+            document.documentElement.classList.remove('menu-open');
+        }
+        btn.addEventListener('click',function(e){
+            e.stopPropagation();
+            var open=nav.classList.toggle('active');
+            if(ov) ov.classList.toggle('active',open);
+            var ic=btn.querySelector('i');
+            if(ic){ic.classList.toggle('ph-list',!open);ic.classList.toggle('ph-x',open);}
+            document.documentElement.classList.toggle('menu-open',open);
+        });
+        if(ov){
+            ov.addEventListener('click',close);
+            ov.addEventListener('touchend',function(e){e.preventDefault();close();});
+        }
+        nav.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){close();});});
+        document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+        window.addEventListener('orientationchange',function(){setTimeout(close,300);});
+    })();
+    </script>
+    <?php endif; ?>
