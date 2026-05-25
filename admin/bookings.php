@@ -224,8 +224,8 @@ require_once __DIR__ . '/../includes/header.php';
                     <td>
                         <?php if($b['status']==='pending'):?>
                             <div style="display:flex;gap:.3rem;">
-                                <form method="POST" onsubmit="return confirm('อนุมัติ?')"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="approve" class="btn btn-success btn-sm" style="padding:.35rem .6rem;"><i class="ph-bold ph-check"></i></button></form>
-                                <form method="POST" onsubmit="return confirm('ปฏิเสธ?')"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="reject" class="btn btn-danger btn-sm" style="padding:.35rem .6rem;"><i class="ph-bold ph-x"></i></button></form>
+                                <form method="POST"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="approve" class="btn btn-success btn-sm" style="padding:.35rem .6rem;"><i class="ph-bold ph-check"></i></button></form>
+                                <form method="POST"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="reject" class="btn btn-danger btn-sm" style="padding:.35rem .6rem;"><i class="ph-bold ph-x"></i></button></form>
                             </div>
                         <?php elseif(($b['status']==='approved' || $b['status']==='pending_return') && $b['booking_type']==='equipment'):?>
                             <button class="btn btn-outline btn-sm" style="color:var(--info);border-color:var(--info);" onclick="openReturnModal(<?php echo $b['id'];?>)"><i class="ph-bold ph-arrow-counter-clockwise"></i> คืน</button>
@@ -259,8 +259,8 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="mc-row"><span class="mc-label">สิ้นสุด</span><span style="color:var(--danger);font-size:.85rem;"><?php echo date('d M Y, H:i',strtotime($b['end_datetime']));?></span></div>
             <?php if($b['status']==='pending'):?>
             <div class="mc-actions">
-                <form method="POST" onsubmit="return confirm('อนุมัติ?')" style="flex:1"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="approve" class="btn btn-success btn-sm w-100"><i class="ph-bold ph-check"></i> อนุมัติ</button></form>
-                <form method="POST" onsubmit="return confirm('ปฏิเสธ?')" style="flex:1"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="reject" class="btn btn-danger btn-sm w-100"><i class="ph-bold ph-x"></i> ปฏิเสธ</button></form>
+                <form method="POST" style="flex:1"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="approve" class="btn btn-success btn-sm w-100"><i class="ph-bold ph-check"></i> อนุมัติ</button></form>
+                <form method="POST" style="flex:1"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="reject" class="btn btn-danger btn-sm w-100"><i class="ph-bold ph-x"></i> ปฏิเสธ</button></form>
             </div>
             <?php elseif(($b['status']==='approved' || $b['status']==='pending_return') && $b['booking_type']==='equipment'):?>
             <div class="mc-actions">

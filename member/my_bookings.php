@@ -112,7 +112,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <td><span class="badge <?php echo $badgeClass;?>"><?php echo $label;?></span></td>
                         <td>
                             <?php if($b['status']==='pending'):?>
-                                <form method="POST" onsubmit="return confirm('ยกเลิก?')"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><input type="hidden" name="action" value="cancel">
+                                <form method="POST"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><input type="hidden" name="action" value="cancel">
                                     <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);padding:.3rem .5rem;"><i class="ph-bold ph-x-circle"></i></button></form>
                             <?php elseif($b['status']==='approved' && $b['booking_type']==='equipment'):?>
                                 <button class="btn btn-outline btn-sm" style="color:var(--info);border-color:var(--info);" onclick="openReturnModal(<?php echo $b['id'];?>)"><i class="ph-bold ph-camera"></i> คืน</button>
@@ -145,7 +145,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="mc-row"><span class="mc-label">สิ้นสุด</span><span style="color:var(--danger);font-size:.85rem;"><?php echo date('d M Y, H:i',strtotime($b['end_datetime']));?></span></div>
                 <?php if($b['status']==='pending'):?>
                 <div class="mc-actions">
-                    <form method="POST" onsubmit="return confirm('ยกเลิก?')" style="flex:1"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><input type="hidden" name="action" value="cancel">
+                    <form method="POST" style="flex:1"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><input type="hidden" name="action" value="cancel">
                         <button class="btn btn-outline btn-sm w-100" style="color:var(--danger);border-color:var(--danger);"><i class="ph-bold ph-x-circle"></i> ยกเลิก</button></form>
                 </div>
                 <?php elseif($b['status']==='approved' && $b['booking_type']==='equipment'):?>
