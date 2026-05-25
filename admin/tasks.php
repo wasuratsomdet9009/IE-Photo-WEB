@@ -56,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $userStmt->execute([$assigned_to]);
                 $assignee = $userStmt->fetch();
                 if ($assignee && !empty($assignee['email'])) {
-                    $body = getBookingPendingEmailTemplate('Admin', "งานใหม่: {$title}", 'equipment');
+                    // ใช้ student_id จริงของผู้รับมอบหมาย ไม่ใช่ hardcode 'Admin'
+                    $body = getBookingPendingEmailTemplate($assignee['student_id'], "งานใหม่: {$title}", 'task');
                     sendEmail($assignee['email'], "IE-Photo: คุณได้รับมอบหมายงานใหม่ — {$title}", $body);
                 }
             } else { $error = 'สร้างงานไม่สำเร็จ'; }
@@ -128,7 +129,7 @@ require_once __DIR__ . '/../includes/header.php';
     </button>
 </div>
 
-<?php if($success):?><div class="alert alert-success"><i class="ph-bold ph-check-circle"></i> <?php echo $success;?></div><?php endif;?>
+<?php if($success):?><div class="alert alert-success"><i class="ph-bold ph-check-circle"></i> <?php echo htmlspecialchars($success);?></div><?php endif;?>
 <?php if($error):?><div class="alert alert-danger"><i class="ph-bold ph-warning-circle"></i> <?php echo htmlspecialchars($error);?></div><?php endif;?>
 
 <!-- Create Task Form -->

@@ -34,12 +34,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($booking_id > 0 && in_array($action, ['approve', 'reject', 'return'])) {
         $status = $action === 'return' ? 'returned' : $action . 'd';
 
-        // Handle return image upload
+        // Handle return image upload — ตรวจสอบทั้ง extension และ MIME type จริง
         $return_image = null;
         if ($action === 'return' && isset($_FILES['return_image']) && $_FILES['return_image']['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($_FILES['return_image']['name'], PATHINFO_EXTENSION));
-            if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
-                $return_image = 'return_' . $booking_id . '_' . time() . '.' . $ext;
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $_FILES['return_image']['tmp_name']);
+            finfo_close($finfo);
+            $allowedMimes = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
+            if (in_array($ext, ['jpg','jpeg','png','webp']) && isset($allowedMimes[$mime])) {
+                $return_image = 'return_' . $booking_id . '_' . time() . '.' . $allowedMimes[$mime];
                 $upload_dir = __DIR__ . '/../uploads/returns/';
                 if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
                 move_uploaded_file($_FILES['return_image']['tmp_name'], $upload_dir . $return_image);
@@ -74,11 +78,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userEmail = $b['member_email'] ?: ($b['guest_email'] ?? '');
             $userName = $b['student_id'] ?: ($b['guest_name'] ?? 'Guest');
 
-            // Update equipment status
+            // Update equipment status — ตรวจสอบ action ก่อนเปลี่ยน
             if ($b['booking_type'] === 'equipment') {
-                $eqStatus = ($action === 'approve') ? 'borrowed' : 'available';
-                $eqUpdate = $pdo->prepare("UPDATE equipments SET status = ? WHERE id = ?");
-                $eqUpdate->execute([$eqStatus, $b['item_id']]);
+                if ($action === 'approve') {
+                    // อนุมัติ → set borrowed
+                    $eqUpdate = $pdo->prepare("UPDATE equipments SET status = 'borrowed' WHERE id = ?");
+                    $eqUpdate->execute([$b['item_id']]);
+                } elseif ($action === 'return') {
+                    // คืนแล้ว → set available
+                    $eqUpdate = $pdo->prepare("UPDATE equipments SET status = 'available' WHERE id = ?");
+                    $eqUpdate->execute([$b['item_id']]);
+                }
+                // reject บน pending booking → ไม่ต้องเปลี่ยน equipment status (ยังไม่ถูก approve)
             }
 
             // Feed entry
@@ -169,7 +180,7 @@ require_once __DIR__ . '/../includes/header.php';
     <a href="bookings.php?export=csv" class="btn btn-outline btn-sm"><i class="ph-bold ph-download-simple"></i> ส่งออก CSV</a>
 </div>
 
-<?php if($success): ?><div class="alert alert-success"><i class="ph-bold ph-check-circle"></i> <?php echo $success; ?></div><?php endif; ?>
+<?php if($success): ?><div class="alert alert-success"><i class="ph-bold ph-check-circle"></i> <?php echo htmlspecialchars($success); ?></div><?php endif; ?>
 <?php if($error): ?><div class="alert alert-danger"><i class="ph-bold ph-warning-circle"></i> <?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
 <!-- Desktop Table -->

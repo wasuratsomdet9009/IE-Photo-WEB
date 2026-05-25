@@ -10,6 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
+// Show only studio feeds (booking_id IS NULL) and feeds related to the current user's own bookings
 $query = "
     SELECT f.id as feed_id, f.message, f.created_at,
            (SELECT COUNT(*) FROM feed_likes WHERE feed_id = f.id) as like_count,
@@ -17,12 +18,14 @@ $query = "
            b.status as booking_status,
            b.form_image_path
     FROM feeds f
-    JOIN bookings b ON f.booking_id = b.id
+    LEFT JOIN bookings b ON f.booking_id = b.id
+    WHERE f.booking_id IS NULL
+       OR b.user_id = :user_id2
     ORDER BY f.created_at DESC
     LIMIT 50
 ";
 $stmt = $pdo->prepare($query);
-$stmt->execute(['user_id' => $user_id]);
+$stmt->execute(['user_id' => $user_id, 'user_id2' => $user_id]);
 $feeds = $stmt->fetchAll();
 
 $base_url = '../';

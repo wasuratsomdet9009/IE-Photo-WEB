@@ -29,8 +29,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $return_image = null;
         if (isset($_FILES['return_image']) && $_FILES['return_image']['error'] === UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($_FILES['return_image']['name'], PATHINFO_EXTENSION));
-            if (in_array($ext, ['jpg','jpeg','png'])) {
-                $return_image = 'return_' . $booking_id . '_' . time() . '.' . $ext;
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $_FILES['return_image']['tmp_name']);
+            finfo_close($finfo);
+            $allowedMimes = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
+            if (in_array($ext, ['jpg','jpeg','png','webp']) && isset($allowedMimes[$mime])) {
+                $return_image = 'return_' . $booking_id . '_' . time() . '.' . $allowedMimes[$mime];
                 $upload_dir = __DIR__ . '/../uploads/returns/';
                 if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
                 move_uploaded_file($_FILES['return_image']['tmp_name'], $upload_dir . $return_image);
@@ -40,10 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $checkStmt = $pdo->prepare("SELECT id FROM bookings WHERE id = ? AND user_id = ? AND status = 'approved'");
         $checkStmt->execute([$booking_id, $user_id]);
         if ($checkStmt->fetch()) {
-            $newStatus = $return_image ? 'pending_return' : 'pending_return';
             if ($return_image) {
                 $pdo->prepare("UPDATE bookings SET status = 'pending_return', return_image_path = ? WHERE id = ?")->execute([$return_image, $booking_id]);
             } else {
+                // ไม่มีรูป → pending_return เหมือนกัน แต่ไม่มี return_image_path
                 $pdo->prepare("UPDATE bookings SET status = 'pending_return' WHERE id = ?")->execute([$booking_id]);
             }
             $pdo->prepare("INSERT INTO feeds (booking_id, message) VALUES (?, ?)")->execute([$booking_id, "ส่งคืนอุปกรณ์ 📦 พร้อมหลักฐาน — รอ admin ตรวจสอบ"]);

@@ -17,8 +17,16 @@ $stmt = $pdo->query("SELECT id, name, type FROM equipments WHERE status = 'avail
 $equipments = $stmt->fetchAll();
 
 // Get members for "responsible person" dropdown
-$memberStmt = $pdo->query("SELECT id, student_id, role FROM users ORDER BY role DESC, student_id ASC");
-$members = $memberStmt->fetchAll();
+// Admin can see all members; regular members only see themselves
+$is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+if ($is_admin) {
+    $memberStmt = $pdo->query("SELECT id, student_id, first_name, last_name FROM users ORDER BY student_id ASC");
+    $members = $memberStmt->fetchAll();
+} else {
+    $memberStmt = $pdo->prepare("SELECT id, student_id, first_name, last_name FROM users WHERE id = ?");
+    $memberStmt->execute([$user_id]);
+    $members = $memberStmt->fetchAll();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item_ids = $_POST['item_ids'] ?? [];
@@ -26,14 +34,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $end_datetime = $_POST['end_datetime'] ?? '';
     $responsible_user_id = intval($_POST['responsible_user_id'] ?? $user_id);
 
-    // Handle form image
+    // Security: non-admin members can only set themselves as responsible
+    if (!$is_admin) {
+        $responsible_user_id = $user_id;
+    }
+
+    // Handle form image — ตรวจสอบ MIME type จริง
     $form_image = '';
     if (isset($_FILES['form_image']) && $_FILES['form_image']['error'] === UPLOAD_ERR_OK) {
         $tmp_name = $_FILES['form_image']['tmp_name'];
-        $name = basename($_FILES['form_image']['name']);
-        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        if (in_array($ext, ['jpg', 'jpeg', 'png', 'pdf'])) {
-            $form_image = 'booking_' . time() . '_' . $user_id . '.' . $ext;
+        $ext = strtolower(pathinfo(basename($_FILES['form_image']['name']), PATHINFO_EXTENSION));
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime  = finfo_file($finfo, $tmp_name);
+        finfo_close($finfo);
+        $allowedMimes = ['image/jpeg'=>'jpg','image/png'=>'png','application/pdf'=>'pdf'];
+        if (in_array($ext, ['jpg','jpeg','png','pdf']) && isset($allowedMimes[$mime])) {
+            $form_image = 'booking_' . time() . '_' . $user_id . '.' . $allowedMimes[$mime];
             $upload_dir = __DIR__ . '/../uploads/booking_forms/';
             if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
             move_uploaded_file($tmp_name, $upload_dir . $form_image);
@@ -50,6 +66,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (strtotime($start_datetime) >= strtotime($end_datetime)) {
             $error = 'เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น';
         } else {
+            // ตรวจสอบ booking conflict — อุปกรณ์ชิ้นนั้นถูกจองซ้อนในช่วงเวลาเดียวกันไหม
+            $conflictIds = [];
+            foreach ($item_ids as $check_id) {
+                $check_id = intval($check_id);
+                if ($check_id <= 0) continue;
+                $cStmt = $pdo->prepare("
+                    SELECT id FROM bookings
+                    WHERE item_id = ? AND booking_type = 'equipment'
+                      AND status IN ('pending','approved')
+                      AND start_datetime < ? AND end_datetime > ?
+                ");
+                $cStmt->execute([$check_id, $end_datetime, $start_datetime]);
+                if ($cStmt->fetch()) {
+                    $eqStmt = $pdo->prepare("SELECT name FROM equipments WHERE id = ?");
+                    $eqStmt->execute([$check_id]);
+                    $conflictIds[] = $eqStmt->fetchColumn();
+                }
+            }
+            if (!empty($conflictIds)) {
+                $error = 'อุปกรณ์ต่อไปนี้ถูกจองในช่วงเวลาดังกล่าวแล้ว: ' . implode(', ', $conflictIds);
+            }
+        }
+        if (!$error && !empty($item_ids)) {
             $pdo->beginTransaction();
             try {
                 $usrStmt = $pdo->prepare("SELECT student_id FROM users WHERE id = ?");
@@ -158,13 +197,17 @@ require_once __DIR__ . '/../includes/header.php';
                 <select id="responsible_user_id" name="responsible_user_id" class="form-control">
                     <?php foreach($members as $m): ?>
                         <option value="<?php echo $m['id']; ?>" <?php echo $m['id'] == $user_id ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($m['student_id']); ?>
-                            <?php echo $m['role'] === 'admin' ? ' (Admin)' : ''; ?>
-                            <?php echo $m['id'] == $user_id ? ' ← ตัวเอง' : ''; ?>
+                            <?php
+                                $display = htmlspecialchars($m['student_id']);
+                                $fullname = trim($m['first_name'] . ' ' . $m['last_name']);
+                                if ($fullname) $display .= ' - ' . htmlspecialchars($fullname);
+                                if ($m['id'] == $user_id) $display .= ' (ฉัน)';
+                                echo $display;
+                            ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
-                <small class="text-muted" style="font-size:.8rem;display:block;margin-top:.3rem;"><i class="ph ph-info"></i> เลือกผู้รับผิดชอบกรณีอุปกรณ์เสียหาย</small>
+                <small class="text-muted" style="font-size:.8rem;display:block;margin-top:.3rem;"><i class="ph ph-info"></i> ผู้รับผิดชอบกรณีอุปกรณ์เสียหาย<?php echo $is_admin ? ' (แอดมินสามารถเลือกแทนสมาชิกได้)' : ' (เฉพาะตัวคุณเอง)'; ?></small>
             </div>
 
             <!-- Date/Time -->

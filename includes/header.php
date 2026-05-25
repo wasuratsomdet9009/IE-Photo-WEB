@@ -33,7 +33,7 @@ function isActive($page) {
     <!-- Top Navbar -->
     <nav class="glass-navbar">
         <div class="nav-container">
-            <a href="<?php echo $base_url; ?>index.html" class="nav-brand">
+            <a href="<?php echo $base_url; ?>auth/login.php" class="nav-brand">
                 <i class="ph-bold ph-camera" style="margin-right:3px"></i> IE-PHOTO
             </a>
             <?php if(isset($_SESSION['user_id'])): ?>
@@ -52,6 +52,7 @@ function isActive($page) {
                         <a href="<?php echo $base_url; ?>admin/tasks.php" class="<?php echo isActive('tasks');?>"><i class="ph ph-kanban"></i> จัดการงาน</a>
                         <a href="<?php echo $base_url; ?>member/calendar.php" class="<?php echo isActive('calendar');?>"><i class="ph ph-calendar"></i> ปฏิทิน</a>
                         <a href="<?php echo $base_url; ?>member/contact_list.php" class="<?php echo isActive('contact_list');?>"><i class="ph ph-address-book"></i> สมาชิก</a>
+                        <a href="<?php echo $base_url; ?>admin/users.php" class="<?php echo isActive('users');?>"><i class="ph ph-users"></i> จัดการสมาชิก</a>
                         <a href="<?php echo $base_url; ?>admin/contact_manage.php" class="<?php echo isActive('contact_manage');?>"><i class="ph ph-users-three"></i> จัดการระบบ</a>
                     <?php else: ?>
                         <a href="<?php echo $base_url; ?>member/feed.php" class="<?php echo isActive('feed');?>"><i class="ph ph-house"></i> ฟีด</a>
@@ -82,32 +83,73 @@ function isActive($page) {
     <main class="main-content">
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const toggleBtn = document.getElementById('mobile-toggle-btn');
-        const navLinks = document.getElementById('nav-links');
-        const overlay = document.getElementById('nav-overlay');
+    (function() {
+        function initNav() {
+            var toggleBtn = document.getElementById('mobile-toggle-btn');
+            var navLinks  = document.getElementById('nav-links');
+            var overlay   = document.getElementById('nav-overlay');
+            if (!toggleBtn || !navLinks) return;
 
-        function closeMenu() {
-            if (navLinks) navLinks.classList.remove('active');
-            if (overlay) overlay.classList.remove('active');
-            if (toggleBtn) {
-                const icon = toggleBtn.querySelector('i');
-                if (icon) icon.classList.replace('ph-x', 'ph-list');
+            /* ปิดเมนู */
+            function closeMenu() {
+                navLinks.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+                var icon = toggleBtn.querySelector('i');
+                if (icon) { icon.classList.remove('ph-x'); icon.classList.add('ph-list'); }
+                document.body.style.overflow = '';
             }
-        }
 
-        if (toggleBtn && navLinks) {
-            toggleBtn.addEventListener('click', function() {
-                const isOpen = navLinks.classList.toggle('active');
+            /* เปิด/ปิดเมนู */
+            function onToggle(e) {
+                e.stopPropagation();
+                var isOpen = navLinks.classList.toggle('active');
                 if (overlay) overlay.classList.toggle('active', isOpen);
-                const icon = toggleBtn.querySelector('i');
-                if (isOpen) icon.classList.replace('ph-list', 'ph-x');
-                else icon.classList.replace('ph-x', 'ph-list');
+                var icon = toggleBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('ph-list', !isOpen);
+                    icon.classList.toggle('ph-x', isOpen);
+                }
+                /* ล็อก scroll body เมื่อเมนูเปิด (ป้องกัน scroll ผ่านใต้เมนู) */
+                document.body.style.overflow = isOpen ? 'hidden' : '';
+            }
+
+            /* ใช้ทั้ง click และ touchend เพื่อรองรับทุก device */
+            toggleBtn.addEventListener('click', onToggle);
+
+            /* ปิดเมื่อกด overlay */
+            if (overlay) {
+                overlay.addEventListener('click', closeMenu);
+                overlay.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    closeMenu();
+                });
+            }
+
+            /* กดลิงก์ในเมนู → ปิดเมนูแล้วค่อย navigate */
+            navLinks.querySelectorAll('a').forEach(function(a) {
+                a.addEventListener('click', function(e) {
+                    /* หยุด event ไม่ให้ bubble ขึ้นไปโดน overlay */
+                    e.stopPropagation();
+                    closeMenu();
+                    /* ถ้า href ปกติ ให้ browser navigate ตามเดิม */
+                });
+            });
+
+            /* ปิดเมื่อกด Escape */
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeMenu();
+            });
+
+            /* ปิดเมื่อหมุนจอ */
+            window.addEventListener('orientationchange', function() {
+                setTimeout(closeMenu, 300);
             });
         }
-        if (overlay) overlay.addEventListener('click', closeMenu);
-        if (navLinks) {
-            navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initNav);
+        } else {
+            initNav();
         }
-    });
+    })();
     </script>

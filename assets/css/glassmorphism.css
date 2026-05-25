@@ -32,13 +32,19 @@
 }
 
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html{
+    scroll-behavior:smooth;
+    -webkit-text-size-adjust:100%;
+    /* overflow-x:hidden บน html แทน body — iOS Safari จะไม่กระทบ position:fixed */
+    overflow-x:hidden;
+}
 body{
     font-family:'Kanit','Inter',sans-serif;
     background:var(--bg);color:var(--text);
     min-height:100vh;min-height:100dvh;
-    overflow-x:hidden;-webkit-font-smoothing:antialiased;
+    -webkit-font-smoothing:antialiased;
     padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + 8px);
+    /* ไม่ใส่ overflow-x:hidden บน body เพราะจะทำให้ position:fixed ติดขัดบน iOS */
 }
 img{max-width:100%;height:auto}
 
@@ -53,6 +59,20 @@ img{max-width:100%;height:auto}
 .bg-orbs::after{width:40vw;height:40vw;max-width:400px;max-height:400px;background:var(--secondary);bottom:-15%;right:-10%;animation-delay:-7s;animation-direction:alternate-reverse}
 @keyframes orbFloat{0%{transform:translate(0,0) scale(1)}50%{transform:translate(3vw,3vh) scale(1.08)}100%{transform:translate(-2vw,2vh) scale(.95)}}
 
+/* === Global Touch & Click Fixes === */
+a, button, [role="button"], input, select, textarea, label {
+    /* ป้องกัน double-tap zoom บน iOS และ delay 300ms */
+    touch-action:manipulation;
+}
+button, [role="button"] {
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+}
+/* ป้องกัน text-size-adjust ที่ทำให้ layout เพี้ยนบน iOS */
+input, select, textarea {
+    -webkit-text-size-adjust:100%;
+}
+
 /* === Typography === */
 h1,h2,h3,h4,h5,h6{font-family:'Kanit','Inter',sans-serif;font-weight:700;line-height:1.3}
 a{color:var(--primary);text-decoration:none;transition:color .2s}
@@ -60,7 +80,7 @@ a:hover{color:var(--primary-hover)}
 
 /* === Top Navbar === */
 .glass-navbar{
-    position:sticky;top:0;z-index:1050;
+    position:sticky;top:0;z-index:1056;
     background:rgba(255,255,255,0.82);
     backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
     border-bottom:1px solid var(--card-border);
@@ -69,34 +89,38 @@ a:hover{color:var(--primary-hover)}
 }
 .nav-container{
     max-width:1200px;margin:0 auto;padding:.55rem 1rem;
-    display:flex;justify-content:space-between;align-items:center;
+    display:flex;justify-content:center;align-items:center;
+    flex-wrap:nowrap;gap:.5rem;
 }
 .nav-brand{
-    font-family:'Kanit',sans-serif;font-weight:800;font-size:1.15rem;
+    font-family:'Kanit',sans-serif;font-weight:800;font-size:1rem;
     color:var(--primary);letter-spacing:-.5px;
     background:linear-gradient(135deg,var(--primary),var(--secondary));
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    white-space:nowrap;margin-right:.4rem;
 }
-.nav-links{display:flex;gap:.6rem;align-items:center}
+.nav-links{display:flex;gap:.2rem;align-items:center;flex-wrap:nowrap}
 .nav-links a{
-    color:var(--text);font-weight:500;font-size:.85rem;
-    padding:.45rem .65rem;border-radius:var(--radius-xs);
+    color:var(--text);font-weight:500;font-size:.78rem;
+    padding:.4rem .45rem;border-radius:var(--radius-xs);
     transition:all .2s;white-space:nowrap;
 }
 .nav-links a:hover{color:var(--primary);background:rgba(242,83,28,0.06)}
 .nav-profile{
-    display:flex;gap:.6rem;align-items:center;
-    border-left:1px solid var(--border);padding-left:.8rem;margin-left:.3rem;
+    display:flex;gap:.3rem;align-items:center;
+    border-left:1px solid var(--border);padding-left:.5rem;margin-left:.2rem;
 }
 
 /* === Bottom Navigation (Mobile) === */
 .bottom-nav{
     display:none;position:fixed;bottom:0;left:0;right:0;z-index:1050;
-    background:rgba(255,255,255,0.92);
+    background:rgba(255,255,255,0.95);
     backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
     border-top:1px solid rgba(0,0,0,0.06);
     box-shadow:0 -4px 20px rgba(0,0,0,0.06);
     padding-bottom:var(--safe-bottom);
+    /* ป้องกัน bottom-nav บังเนื้อหาด้านบน — pointer-events เฉพาะ bar เท่านั้น */
+    pointer-events:auto;
 }
 .bottom-nav-inner{
     display:flex;justify-content:space-around;align-items:center;
@@ -106,8 +130,12 @@ a:hover{color:var(--primary-hover)}
     display:flex;flex-direction:column;align-items:center;gap:2px;
     padding:.35rem .5rem;border-radius:var(--radius-xs);
     color:var(--text-muted);font-size:.65rem;font-weight:500;
-    transition:all .2s;min-width:52px;text-decoration:none;
+    transition:color .2s,transform .2s;
+    min-width:52px;min-height:44px;justify-content:center;
+    text-decoration:none;
     -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+    cursor:pointer;
 }
 .bottom-nav a i{font-size:1.25rem;transition:transform .2s}
 .bottom-nav a.active,.bottom-nav a:hover{color:var(--primary)}
@@ -115,11 +143,17 @@ a:hover{color:var(--primary-hover)}
 
 /* === Slide Menu Overlay === */
 .nav-overlay{
-    display:none;position:fixed;inset:0;z-index:1054;
-    background:rgba(0,0,0,0.35);backdrop-filter:blur(4px);
-    opacity:0;transition:opacity .3s;
+    position:fixed;inset:0;z-index:900;
+    background:rgba(0,0,0,0.25);
+    opacity:0;visibility:hidden;
+    transition:opacity .3s,visibility .3s;
+    pointer-events:none;
+    /* z-index:900 — ต่ำกว่า glass-navbar(1056) และ bottom-nav(1050) ทุกครั้ง */
 }
-.nav-overlay.active{display:block;opacity:1}
+.nav-overlay.active{
+    opacity:1;visibility:visible;
+    pointer-events:auto;
+}
 
 /* === Layout === */
 .main-content{flex:1;max-width:1200px;width:100%;margin:1rem auto;padding:0 1rem}
@@ -342,7 +376,10 @@ textarea.form-control{resize:vertical;min-height:80px}
     display:none;font-size:1.5rem;cursor:pointer;
     color:var(--primary);z-index:1060;transition:transform .3s;
     background:none;border:none;padding:6px;
-    -webkit-tap-highlight-color:transparent;min-width:44px;min-height:44px;
+    -webkit-tap-highlight-color:transparent;
+    min-width:44px;min-height:44px;
+    touch-action:manipulation;
+    position:relative; /* สร้าง stacking context ใน navbar */
 }
 
 /* === Utility === */
@@ -364,32 +401,70 @@ textarea.form-control{resize:vertical;min-height:80px}
     .nav-links{
         position:fixed;top:0;right:-100%;
         width:80%;max-width:340px;height:100vh;height:100dvh;
-        background:rgba(255,255,255,.98);backdrop-filter:blur(30px);
+        background:#fff;
         flex-direction:column;justify-content:flex-start;align-items:stretch;
         transition:right .35s cubic-bezier(.4,0,.2,1);
-        box-shadow:-8px 0 30px rgba(0,0,0,.08);z-index:1055;
+        box-shadow:-8px 0 30px rgba(0,0,0,.12);
+        /* z-index สูงกว่า overlay(900) และ bottom-nav(1050) */
+        z-index:1060;
         gap:0;padding:calc(var(--safe-top) + 60px) 0 2rem;
         overflow-y:auto;-webkit-overflow-scrolling:touch;
+        /* กันไม่ให้ stacking context ของ parent มาบัง */
+        pointer-events:auto;
+        isolation:isolate;
     }
     .nav-links.active{right:0}
     .nav-links a{
+        display:flex;align-items:center;
         font-size:.95rem;padding:.85rem 1.5rem;width:100%;
         text-align:left;border-radius:0;
         border-bottom:1px solid rgba(0,0,0,.03);
+        /* Touch fixes */
+        -webkit-tap-highlight-color:transparent;
+        touch-action:manipulation;
+        cursor:pointer;
+        min-height:48px; /* iOS recommended touch target */
+        pointer-events:auto;
+        position:relative;
+        z-index:1;
     }
-    .nav-links a i{width:24px;text-align:center}
+    .nav-links a:active{background:rgba(242,83,28,.08)}
+    .nav-links a i{width:24px;text-align:center;flex-shrink:0}
     .nav-profile{
         flex-direction:column;border-left:none;
         border-top:1px solid var(--border);
         padding:1rem 1.5rem 0;margin:auto 0 0;width:100%;gap:.5rem;
     }
-    .nav-profile a{width:100%;text-align:center;padding:.7rem}
+    .nav-profile a{
+        width:100%;text-align:center;padding:.7rem;
+        -webkit-tap-highlight-color:transparent;
+        touch-action:manipulation;
+        min-height:44px;
+    }
 
     .main-content{margin:.8rem auto;padding:0 .7rem}
     .desktop-table{display:none !important}
     .mobile-cards{display:block !important}
     .stats-grid{grid-template-columns:repeat(2,1fr);gap:.6rem}
     .page-header{margin-bottom:1.2rem}
+}
+
+/* Tablet: 601px – 950px */
+@media (min-width:601px) and (max-width:950px) {
+    .stats-grid{grid-template-columns:repeat(4,1fr)}
+    .contact-grid{grid-template-columns:repeat(3,1fr)}
+    .charts-grid{grid-template-columns:1fr 1.5fr}
+    .grid-2{grid-template-columns:1fr 1fr;gap:1.2rem}
+    .form-row{flex-direction:row;gap:.8rem}
+    .glass-card{padding:1.4rem}
+    .auth-wrapper .glass-card{max-width:480px;margin:0 auto}
+}
+
+/* Large phones: 421px – 600px */
+@media (min-width:421px) and (max-width:600px) {
+    .contact-grid{grid-template-columns:repeat(3,1fr)}
+    .glass-card{padding:1.1rem}
+    .stats-grid{grid-template-columns:repeat(2,1fr);gap:.7rem}
 }
 
 /* Small phones: ≤ 420px */
@@ -403,6 +478,46 @@ textarea.form-control{resize:vertical;min-height:80px}
     .contact-avatar{width:52px;height:52px;border-radius:16px}
     .upload-zone{padding:1.2rem}
     .nav-links{width:85%;max-width:300px}
+    .page-header h2{font-size:1.25rem}
+    .bottom-nav a{font-size:.6rem;min-width:44px}
+    .mc-row{flex-wrap:wrap}
+}
+
+/* Very small phones: ≤ 360px (iPhone SE, Galaxy A) */
+@media (max-width:360px) {
+    :root{--radius:14px;--radius-sm:10px}
+    .glass-card{padding:.85rem;border-radius:12px}
+    .stats-grid{grid-template-columns:repeat(2,1fr);gap:.5rem}
+    .stat-card{padding:.7rem}
+    .stat-card .stat-value{font-size:1.2rem}
+    .stat-card .stat-label{font-size:.72rem}
+    .btn{padding:.55rem .8rem;font-size:.82rem}
+    .btn-sm{padding:.35rem .6rem;font-size:.75rem}
+    .form-control{font-size:15px;padding:.65rem .85rem}
+    .page-header h2{font-size:1.15rem}
+    .contact-grid{grid-template-columns:repeat(2,1fr);gap:.5rem}
+    .contact-card{padding:.65rem .5rem}
+    .contact-avatar{width:44px;height:44px;border-radius:12px}
+    .bottom-nav a{font-size:.58rem;padding:.3rem .35rem;min-width:40px}
+    .bottom-nav a i{font-size:1.1rem}
+    .main-content{padding:0 .5rem}
+    .mobile-card{padding:.8rem}
+    .glass-table{min-width:480px}
+    .nav-links{width:90%;max-width:280px}
+    .auth-wrapper{padding:1rem .5rem}
+    .badge{font-size:.68rem;padding:.25rem .5rem}
+}
+
+/* Landscape phones */
+@media (max-width:950px) and (orientation:landscape) {
+    :root{--bottom-nav-h:52px}
+    .auth-wrapper{min-height:calc(100vh - var(--nav-h) - 40px);padding:.8rem}
+    .bottom-nav a{padding:.25rem .4rem}
+    .bottom-nav a span{display:none}
+    .bottom-nav-inner{padding:.2rem 0}
+    .main-content{margin:.5rem auto}
+    .page-header{margin-bottom:.8rem}
+    .stats-grid{grid-template-columns:repeat(4,1fr);gap:.5rem}
 }
 
 /* Desktop: > 950px */
@@ -416,6 +531,13 @@ textarea.form-control{resize:vertical;min-height:80px}
     .toast-container{bottom:20px;right:16px;left:auto}
 }
 
+/* Wide desktop: > 1400px */
+@media (min-width:1400px) {
+    .main-content{max-width:1400px}
+    .stats-grid{grid-template-columns:repeat(4,1fr)}
+    .contact-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+}
+
 /* === Animations === */
 @keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .animate-in{animation:fadeInUp .4s ease both}
@@ -423,9 +545,264 @@ textarea.form-control{resize:vertical;min-height:80px}
 .animate-in:nth-child(3){animation-delay:.12s}
 .animate-in:nth-child(4){animation-delay:.18s}
 
+/* === Hover Animations === */
+.glass-card{transition:transform .25s cubic-bezier(.4,0,.2,1),box-shadow .25s,border-color .25s}
+.glass-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.1),var(--card-glow);border-color:rgba(242,83,28,.18)}
+
+.stat-card{transition:transform .25s cubic-bezier(.4,0,.2,1),box-shadow .25s,border-color .25s}
+.stat-card:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 12px 28px rgba(0,0,0,.08);border-color:rgba(242,83,28,.2)}
+
+.mobile-card{transition:transform .2s,box-shadow .2s}
+.mobile-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.07)}
+
+.contact-card{transition:transform .25s,box-shadow .25s,border-color .25s}
+.contact-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 12px 28px rgba(0,0,0,.08);border-color:rgba(242,83,28,.2)}
+
+.feed-card{transition:transform .25s,box-shadow .25s}
+.feed-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.09)}
+
+.nav-links a{transition:color .2s,background .2s}
+/* ไม่ใช้ transform บน nav-links a — ป้องกัน stacking context ที่ไม่จำเป็น */
+@media (min-width:951px) {
+    .nav-links a:hover{transform:translateY(-1px)}
+}
+
+.btn{transition:all .25s cubic-bezier(.4,0,.2,1)}
+.btn-outline:hover{transform:translateY(-2px);box-shadow:0 6px 18px var(--primary-glow)}
+.btn-success:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(34,197,94,.25)}
+.btn-danger:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(239,68,68,.25)}
+
+.upload-zone{transition:border-color .25s,background .25s,transform .2s}
+.upload-zone:hover{transform:scale(1.01)}
+
+.bottom-nav a{transition:color .2s,transform .2s}
+.bottom-nav a:hover,.bottom-nav a.active{transform:translateY(-2px)}
+
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(242,83,28,.3)}50%{box-shadow:0 0 0 6px rgba(242,83,28,.0)}}
+.btn-primary:hover{animation:pulseGlow .6s ease}
+
 /* === Print === */
 @media print{
     .glass-navbar,.glass-footer,.bg-orbs,.toast-container,.bottom-nav{display:none !important}
     .glass-card{box-shadow:none;border:1px solid #ddd}
     body{padding-bottom:0}
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   UX POLISH — Loading, States, Feedback, Micro-interactions
+   ═══════════════════════════════════════════════════════════════ */
+
+/* === Button Loading State === */
+.btn-loading{
+    position:relative;
+    pointer-events:none;
+    opacity:.8;
+}
+.btn-loading .btn-text{ visibility:hidden }
+.btn-loading::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    margin:auto;
+    width:18px;height:18px;
+    border:2.5px solid rgba(255,255,255,.35);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:btnSpin .65s linear infinite;
+}
+.btn-outline.btn-loading::after{
+    border-color:rgba(242,83,28,.3);
+    border-top-color:var(--primary);
+}
+@keyframes btnSpin{ to{ transform:rotate(360deg) } }
+
+/* Button press feedback */
+.btn:active:not(.btn-loading){ transform:translateY(1px) scale(.98) !important }
+
+/* === Form Field States === */
+.form-control.is-invalid{
+    border-color:var(--danger);
+    background:rgba(239,68,68,.03);
+    box-shadow:0 0 0 4px rgba(239,68,68,.08);
+}
+.form-control.is-valid{
+    border-color:var(--success);
+    background:rgba(34,197,94,.03);
+    box-shadow:0 0 0 4px rgba(34,197,94,.07);
+}
+.field-error{
+    font-size:.78rem;color:var(--danger);
+    margin-top:.3rem;display:flex;align-items:center;gap:4px;
+    animation:alertSlideIn .2s ease;
+}
+.field-hint{
+    font-size:.78rem;color:var(--text-muted);
+    margin-top:.3rem;display:flex;align-items:center;gap:4px;
+}
+/* Password strength bar */
+.pwd-strength{height:4px;border-radius:2px;margin-top:.4rem;transition:width .4s,background .4s;width:0}
+.pwd-weak   { background:var(--danger);  width:33% }
+.pwd-medium { background:var(--warning); width:66% }
+.pwd-strong { background:var(--success); width:100% }
+
+/* === Table UX === */
+.glass-table tbody tr{
+    transition:box-shadow .18s,transform .18s;
+    cursor:default;
+}
+.glass-table tbody tr:hover td{
+    background:#fafbff;
+}
+.glass-table tbody tr:hover td:first-child{
+    border-left-color:var(--primary);
+}
+/* Striped rows */
+.glass-table.striped tbody tr:nth-child(even) td{ background:#f9fafb }
+
+/* === Skeleton Loading === */
+.skeleton{
+    background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);
+    background-size:200% 100%;
+    animation:skeletonPulse 1.4s ease infinite;
+    border-radius:var(--radius-xs);
+    display:inline-block;
+}
+@keyframes skeletonPulse{
+    0%  { background-position:200% 0 }
+    100%{ background-position:-200% 0 }
+}
+.skeleton-text  { height:14px;width:100%;margin-bottom:.5rem }
+.skeleton-title { height:22px;width:60%;margin-bottom:.75rem }
+.skeleton-avatar{ width:48px;height:48px;border-radius:50% }
+.skeleton-card  { height:120px;width:100%;border-radius:var(--radius) }
+
+/* === Better Scrollbar === */
+::-webkit-scrollbar{ width:6px;height:6px }
+::-webkit-scrollbar-track{ background:transparent }
+::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.15);border-radius:3px }
+::-webkit-scrollbar-thumb:hover{ background:rgba(0,0,0,.25) }
+
+/* === Text Selection === */
+::selection{ background:rgba(242,83,28,.18);color:var(--text) }
+
+/* === Focus Ring (Accessibility) === */
+:focus-visible{
+    outline:2.5px solid var(--primary);
+    outline-offset:2px;
+    border-radius:var(--radius-xs);
+}
+button:focus-visible, a:focus-visible{
+    outline:2.5px solid var(--primary);
+    outline-offset:3px;
+}
+
+/* === Disabled State === */
+.btn:disabled,.btn[disabled]{
+    opacity:.45;pointer-events:none;cursor:not-allowed;transform:none !important;
+}
+.form-control:disabled,.form-control[readonly]{
+    background:#f5f5f5;cursor:not-allowed;opacity:.7;
+}
+
+/* === Alert Auto-dismiss Bar === */
+.alert{ position:relative;overflow:hidden }
+.alert-dismiss-bar{
+    position:absolute;bottom:0;left:0;height:2px;
+    background:currentColor;opacity:.25;
+    animation:dismissBar var(--dismiss-duration,4s) linear forwards;
+    width:100%;transform-origin:left;
+}
+@keyframes dismissBar{ to{ transform:scaleX(0) } }
+
+/* === Toast Enhancements === */
+.toast{
+    max-width:360px;
+    animation:toastIn .4s cubic-bezier(.175,.885,.32,1.275) both;
+}
+.toast.hiding{
+    animation:toastOut .3s ease forwards;
+}
+@keyframes toastIn {
+    from{ opacity:0;transform:translateX(120%) }
+    to  { opacity:1;transform:translateX(0) }
+}
+@keyframes toastOut{
+    to{ opacity:0;transform:translateX(120%) }
+}
+
+/* === Empty State === */
+.empty-state{
+    text-align:center;padding:3rem 1.5rem;
+}
+.empty-state-icon{
+    width:80px;height:80px;border-radius:24px;
+    background:linear-gradient(135deg,rgba(242,83,28,.08),rgba(239,57,97,.08));
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 1.2rem;
+    font-size:2rem;
+}
+.empty-state h3{ font-size:1.1rem;margin-bottom:.4rem;color:var(--text) }
+.empty-state p { font-size:.88rem;color:var(--text-muted) }
+
+/* === Card Highlight === */
+.glass-card.highlight{
+    border-color:rgba(242,83,28,.35);
+    box-shadow:0 0 0 3px rgba(242,83,28,.1),var(--card-shadow);
+}
+
+/* === Progress Bar === */
+.progress{
+    height:6px;background:#e8ecf0;border-radius:3px;overflow:hidden;
+}
+.progress-bar{
+    height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));
+    border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1);
+}
+
+/* === Input with Prefix Icon === */
+.input-icon-wrap{ position:relative }
+.input-icon-wrap .form-control{ padding-left:2.6rem }
+.input-icon-wrap .input-icon{
+    position:absolute;left:.85rem;top:50%;transform:translateY(-50%);
+    color:var(--text-muted);font-size:1rem;pointer-events:none;
+    transition:color .2s;
+}
+.input-icon-wrap .form-control:focus ~ .input-icon{ color:var(--primary) }
+
+/* === Divider === */
+.divider{
+    display:flex;align-items:center;gap:.75rem;
+    color:var(--text-muted);font-size:.8rem;margin:1.25rem 0;
+}
+.divider::before,.divider::after{
+    content:'';flex:1;height:1px;background:var(--border);
+}
+
+/* === Notification Badge Pulse === */
+.badge-pulse{
+    position:relative;
+}
+.badge-pulse::after{
+    content:'';position:absolute;inset:-2px;border-radius:50%;
+    background:var(--primary);opacity:.35;
+    animation:badgePulse 1.8s ease infinite;
+}
+@keyframes badgePulse{
+    0%,100%{ transform:scale(1);opacity:.35 }
+    50%    { transform:scale(1.5);opacity:0 }
+}
+
+/* === Page Transition === */
+.page-enter{
+    animation:pageEnter .35s cubic-bezier(.4,0,.2,1) both;
+}
+@keyframes pageEnter{
+    from{ opacity:0;transform:translateY(8px) }
+    to  { opacity:1;transform:translateY(0) }
+}
+
+/* === Smooth Image Load === */
+img.lazy{
+    opacity:0;transition:opacity .4s;
+}
+img.lazy.loaded{ opacity:1 }

@@ -202,6 +202,104 @@ node import_db.js
 
 ---
 
+# สุดท้าย
+
+ระบบมันทำงานได้อยู่แล้ว
+
+ถ้าพัง:
+
+* 10% = บัคจริง
+* 90% = มึงแก้อะไรแปลกๆ เอง
+
+---
+
+# Changelog — สิ่งที่แก้ไขทั้งหมด
+
+---
+
+## 🔐 Security Fixes
+
+### `admin/users.php`
+- เพิ่ม CSRF token ใน **ทั้งสอง form** (Desktop Table + Mobile Cards)
+  - ก่อนหน้านี้ Desktop form ขาด `<input type="hidden" name="csrf_token">` ทำให้ได้รับ error "คำขอไม่ถูกต้อง"
+- เพิ่มการ generate และ validate CSRF token ด้วย `hash_equals()` + `bin2hex(random_bytes(32))`
+- เพิ่มฟีเจอร์ **รีเซ็ตรหัสผ่าน**: admin เปิด modal กรอกรหัสใหม่ + ยืนยัน พร้อม real-time check ตรงกัน
+- เพิ่มฟีเจอร์ **ลบบัญชี**: modal ยืนยันก่อนลบ — ไม่สามารถลบบัญชีตัวเองได้
+- แสดงสถานะยืนยันอีเมล (badge) ในตารางและ mobile card
+
+### `config/database.php`
+- `display_errors` แสดงเฉพาะบน localhost เท่านั้น — production ไม่โชว์ error ให้ user เห็น
+- Error message บน production ซ่อน DB details ไว้ แสดงแค่ "ระบบขัดข้องชั่วคราว"
+
+### `admin/bookings.php`
+- ป้องกัน XSS: เพิ่ม `htmlspecialchars($success)`
+- เปลี่ยนการตรวจสอบ MIME type ของรูปภาพจาก extension เป็น `finfo_file()` (ตรวจ content จริง)
+- แก้ logic สถานะอุปกรณ์: reject → **ไม่** เปลี่ยนสถานะอุปกรณ์, คืนของ → available, อนุมัติ → borrowed
+
+### `admin/contact_manage.php`
+- เพิ่ม `htmlspecialchars()` ให้ `$custom_msg` ก่อน embed ใน email (ป้องกัน XSS injection)
+
+### `admin/tasks.php`
+- ป้องกัน XSS: เพิ่ม `htmlspecialchars($success)`
+- แก้ email template: ใช้ student_id จริงของผู้รับงาน แทน hardcode `'Admin'`
+
+### `admin/inventory.php`
+- ป้องกัน XSS: เพิ่ม `htmlspecialchars($success)`
+
+### `member/borrow_form.php`
+- เปลี่ยนการตรวจสอบ MIME type เป็น `finfo_file()` (ป้องกัน extension spoofing)
+- เพิ่มการตรวจ booking conflict: ไม่ให้จองอุปกรณ์ซ้ำช่วงเวลาเดิม
+
+### `member/my_bookings.php`
+- เปลี่ยนการตรวจสอบ MIME type เป็น `finfo_file()`
+- ลบ dead code: `$newStatus = $return_image ? 'pending_return' : 'pending_return'`
+
+### `member/profile.php`
+- ป้องกัน PHP 8.1+ TypeError: เพิ่ม `$user['phone'] ?? ''` (NULL safety)
+- เปลี่ยนการตรวจสอบ MIME type เป็น `finfo_file()`
+
+---
+
+## 🐛 Bug Fixes
+
+### `guest/studio_booking.php`
+- แก้ query `status = 'open'` → `status = 'available'` (ก่อนหน้าสตูดิโอไม่แสดงเลย เพราะ DB เก็บค่า `'available'`)
+- เพิ่มการตรวจ booking conflict ก่อนสร้าง booking ใหม่
+
+### `member/contact_list.php`
+- ลบ column `contact_status` ออกจาก query (column ไม่มีใน DB → หน้าพังทันที)
+- เพิ่ม `first_name`, `last_name` ใน query แสดงชื่อ-นามสกุลแทน
+
+### `admin/contact_manage.php`
+- เปลี่ยนจาก `INNER JOIN` → `LEFT JOIN` (ก่อนหน้าการจองสตูดิโอหายไปจากหน้าจัดการ)
+
+### `auth/logout.php`
+- แก้ redirect path `../auth/login.php` → `login.php` (path ซ้ำซ้อน)
+
+### `includes/footer.php`
+- แก้ `showToast()` ให้รองรับทั้ง `'danger'` และ `'error'` → แสดง ❌ และ border สีแดง
+
+### `assets/js/main.js`
+- ลบ `showToast()` ที่ define ซ้ำออก (canonical อยู่ใน `footer.php` แล้ว)
+
+---
+
+## ✨ New Features
+
+### `auth/register.php`
+- เพิ่มช่อง **ชื่อจริง** และ **นามสกุล** (แสดงแบบ side-by-side ด้วย `form-row`)
+- เพิ่มปุ่ม show/hide password (`togglePwd()`)
+- เพิ่ม validation: `mb_strlen()` สำหรับชื่อ-นามสกุล, phone regex `/^0[0-9]{8,9}$/`, password max 255
+- Sticky values: ค่าที่กรอกไว้จะยังอยู่เมื่อ form มี error
+
+### `auth/login.php`
+- เพิ่ม validation: ถ้ากรอก email (มี `@`) ต้องเป็น `@kmitl.ac.th` เท่านั้น
+- เพิ่ม JS real-time check: พิมพ์ email ผิด domain → ขึ้น hint + disable ปุ่ม login ทันที
+- อัปเดต placeholder ให้ชัดเจนขึ้น
+- Sticky value สำหรับ identifier field
+
+---
+
 ## วิธีอัปเดตโค้ด (Deploy ใหม่)
 
 ```bash
@@ -471,3 +569,49 @@ $port   = getenv('MYSQLPORT') ?: '3306';
 ---
 
 *อัปเดตล่าสุด: 2026-05-25*
+
+---
+
+### ngrok → Cloudflare Tunnel
+- เปลี่ยนจาก ngrok free tier ไปใช้ **Cloudflare Tunnel (cloudflared)**
+- ngrok free tier มี browser warning interstitial — CSS/JS ไม่โหลดบน Instagram/LINE in-app browser และ iOS Safari
+- cloudflared ไม่มี warning page → CSS โหลดได้ทุก browser ทุก device
+
+**วิธีรัน Cloudflare Tunnel:**
+```powershell
+# เปิด Apache
+Start-Process "C:\xampp\apache\bin\httpd.exe" -WindowStyle Hidden
+
+# เปิด MySQL
+Start-Process "C:\xampp\mysql\bin\mysqld.exe" -WorkingDirectory "C:\xampp\mysql\bin" -WindowStyle Hidden
+
+# เปิด Cloudflare Tunnel
+C:\Users\weerapat\cloudflared.exe tunnel --url http://localhost:80
+```
+
+> URL จะเปลี่ยนทุกครั้งที่รีสตาร์ท ถ้าอยากได้ URL คงที่ให้สมัคร Cloudflare account ฟรีแล้วสร้าง Named Tunnel
+
+---
+
+## 📋 สรุปไฟล์ที่ถูกแก้ไข
+
+| ไฟล์ | สิ่งที่แก้ |
+|---|---|
+| `assets/css/glassmorphism.css` | z-index, touch fix, overflow, nav-overlay |
+| `includes/header.php` | Navbar JS rewrite |
+| `includes/footer.php` | showToast รองรับ danger/error |
+| `assets/js/main.js` | ลบ showToast ซ้ำ |
+| `config/database.php` | display_errors, production error message |
+| `auth/login.php` | @kmitl.ac.th validation, sticky value |
+| `auth/register.php` | เพิ่มชื่อ-นามสกุล, password toggle |
+| `auth/logout.php` | แก้ redirect path |
+| `guest/studio_booking.php` | status fix, conflict check |
+| `member/contact_list.php` | ลบ column ที่ไม่มีใน DB |
+| `member/borrow_form.php` | MIME check, conflict check |
+| `member/my_bookings.php` | MIME check, ลบ dead code |
+| `member/profile.php` | NULL safety, MIME check |
+| `admin/users.php` | CSRF token ครบทั้ง 2 form |
+| `admin/bookings.php` | XSS, MIME check, equipment status |
+| `admin/contact_manage.php` | LEFT JOIN, XSS fix |
+| `admin/tasks.php` | XSS, email student_id |
+| `admin/inventory.php` | XSS fix |
