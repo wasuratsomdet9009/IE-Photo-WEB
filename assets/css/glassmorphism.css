@@ -95,23 +95,26 @@ a:hover{color:var(--primary-hover)}
     flex-wrap:nowrap;gap:.5rem;
 }
 .nav-brand{
-    font-family:'Kanit',sans-serif;font-weight:800;font-size:1rem;
+    font-family:'Kanit',sans-serif;font-weight:800;font-size:1.05rem;
     color:var(--primary);letter-spacing:-.5px;
     background:linear-gradient(135deg,var(--primary),var(--secondary));
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-    white-space:nowrap;margin-right:.4rem;
-    flex-shrink:0; /* ไม่ให้โลโก้ถูกบีบ */
+    white-space:nowrap;margin-right:.5rem;
+    flex-shrink:0;
+    display:inline-flex;align-items:center;gap:5px;
 }
-.nav-links{display:flex;gap:.2rem;align-items:center;flex-wrap:nowrap}
+.nav-brand i{font-size:1.2rem;-webkit-text-fill-color:var(--primary)}
+.nav-links{display:flex;gap:.3rem;align-items:center;flex-wrap:nowrap}
 .nav-links a{
-    color:var(--text);font-weight:500;font-size:.78rem;
-    padding:.4rem .45rem;border-radius:var(--radius-xs);
+    color:var(--text);font-weight:500;font-size:.82rem;
+    padding:.42rem .55rem;border-radius:var(--radius-xs);
     transition:all .2s;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:5px;
 }
 .nav-links a:hover{color:var(--primary);background:rgba(242,83,28,0.06)}
 .nav-profile{
     display:flex;gap:.3rem;align-items:center;
-    border-left:1px solid var(--border);padding-left:.5rem;margin-left:.2rem;
+    border-left:1px solid var(--border);padding-left:.6rem;margin-left:.25rem;
 }
 
 /* === Bottom Navigation (Mobile) === */
@@ -408,8 +411,11 @@ textarea.form-control{resize:vertical;min-height:80px}
     /* ซ่อน hamburger — ใช้ top-bar แทน */
     .mobile-toggle{display:none !important}
     .bottom-nav{display:block}
-    /* overlay ไม่ถูกใช้อีกแล้ว แต่เก็บไว้ไม่ให้ error */
+    /* overlay ไม่ถูกใช้อีกแล้ว */
     .nav-overlay{display:none}
+
+    /* navbar สูงขึ้นนิด เพื่อให้ touch target สบาย */
+    .nav-container{padding:.6rem 1rem}
 
     /* ── nav-links: always-visible horizontal scrollable bar ── */
     .nav-links{
@@ -419,39 +425,49 @@ textarea.form-control{resize:vertical;min-height:80px}
         flex-direction:row;justify-content:flex-end;align-items:center;
         flex-wrap:nowrap;
         background:transparent;box-shadow:none;
-        padding:0;gap:0;
+        padding:0;gap:.25rem;
         overflow-x:auto;overflow-y:visible;
-        /* ซ่อน scrollbar แต่ยังเลื่อนได้ */
         scrollbar-width:none;-ms-overflow-style:none;
         isolation:auto;will-change:auto;
         -webkit-backface-visibility:visible;backface-visibility:visible;
         pointer-events:auto;
-        /* flex-shrink ให้ยืดหด — ถ้าล้นให้ scroll ไม่ใช่ wrap */
         flex:1;min-width:0;
     }
     .nav-links::-webkit-scrollbar{display:none}
     .nav-links a{
-        font-size:.7rem;
-        padding:.3rem .4rem;
+        font-size:.8rem;font-weight:600;
+        padding:.38rem .6rem;
         border-radius:var(--radius-xs);
         border-bottom:none;
         white-space:nowrap;
         width:auto;
-        min-height:36px;
+        min-height:38px;
+        display:inline-flex;align-items:center;gap:4px;
         -webkit-tap-highlight-color:transparent;
         touch-action:manipulation;
     }
-    .nav-links a i{width:auto;font-size:.85rem}
+    /* ซ่อน icon ใน nav-links บน mobile — ประหยัดพื้นที่, ดูสะอาดขึ้น */
+    .nav-links > a i,
+    .nav-links > a .ph,
+    .nav-links > a [class*="ph-"]{display:none}
     .nav-profile{
-        flex-direction:row;
+        flex-direction:row;align-items:center;
         border-left:1px solid var(--border);border-top:none;
-        padding:0 0 0 .4rem;margin:0;
+        padding:0 0 0 .5rem;margin:0 0 0 .1rem;
         width:auto;gap:.2rem;flex-shrink:0;
     }
+    /* ซ่อน icon ใน nav-profile ด้วย */
+    .nav-profile a i,
+    .nav-profile a .ph,
+    .nav-profile a [class*="ph-"]{display:none}
     .nav-profile a{
-        width:auto;text-align:left;
-        padding:.3rem .35rem;min-height:36px;
-        font-size:.7rem;white-space:nowrap;
+        width:auto;
+        padding:.38rem .5rem;min-height:38px;
+        font-size:.8rem;font-weight:600;white-space:nowrap;
+    }
+    /* ปุ่มออกจากระบบ — compact บน mobile */
+    .nav-profile .btn-sm{
+        padding:.32rem .6rem;font-size:.75rem;min-height:34px;
     }
 
     .main-content{margin:.8rem auto;padding:0 .7rem}
