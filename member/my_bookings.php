@@ -20,38 +20,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $checkStmt = $pdo->prepare("SELECT id FROM bookings WHERE id = ? AND user_id = ? AND status = 'pending'");
         $checkStmt->execute([$booking_id, $user_id]);
         if ($checkStmt->fetch()) {
-            $pdo->prepare("UPDATE bookings SET status = 'cancelled' WHERE id = ?")->execute([$booking_id]);
-            $pdo->prepare("INSERT INTO feeds (booking_id, message) VALUES (?, ?)")->execute([$booking_id, "ยกเลิกคำขอจอง ❌ (โดยผู้ใช้)"]);
-            $success = "ยกเลิกการจองเรียบร้อยแล้ว";
+            try {
+                $pdo->beginTransaction();
+                $pdo->prepare("UPDATE bookings SET status = 'cancelled' WHERE id = ?")->execute([$booking_id]);
+                $pdo->prepare("INSERT INTO feeds (booking_id, message) VALUES (?, ?)")->execute([$booking_id, "ยกเลิกคำขอจอง ❌ (โดยผู้ใช้)"]);
+                $pdo->commit();
+                $success = "ยกเลิกการจองเรียบร้อยแล้ว";
+            } catch (Exception $e) { $pdo->rollBack(); $error = "เกิดข้อผิดพลาด กรุณาลองใหม่"; }
         } else { $error = "ไม่พบรายการหรือไม่สามารถยกเลิกได้"; }
     } elseif ($booking_id > 0 && $action === 'return') {
         // Member returns equipment with photo evidence
         $return_image = null;
         if (isset($_FILES['return_image']) && $_FILES['return_image']['error'] === UPLOAD_ERR_OK) {
-            $ext = strtolower(pathinfo($_FILES['return_image']['name'], PATHINFO_EXTENSION));
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime  = finfo_file($finfo, $_FILES['return_image']['tmp_name']);
-            finfo_close($finfo);
-            $allowedMimes = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
-            if (in_array($ext, ['jpg','jpeg','png','webp']) && isset($allowedMimes[$mime])) {
-                $return_image = 'return_' . $booking_id . '_' . time() . '.' . $allowedMimes[$mime];
-                $upload_dir = __DIR__ . '/../uploads/returns/';
-                if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
-                move_uploaded_file($_FILES['return_image']['tmp_name'], $upload_dir . $return_image);
+            if ($_FILES['return_image']['size'] > 8 * 1024 * 1024) {
+                $error = 'ไฟล์ใหญ่เกิน 8 MB';
+            } else {
+                $ext = strtolower(pathinfo($_FILES['return_image']['name'], PATHINFO_EXTENSION));
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime  = finfo_file($finfo, $_FILES['return_image']['tmp_name']);
+                finfo_close($finfo);
+                $allowedMimes = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
+                if (in_array($ext, ['jpg','jpeg','png','webp']) && isset($allowedMimes[$mime])) {
+                    $return_image = 'return_' . $booking_id . '_' . time() . '.' . $allowedMimes[$mime];
+                    $upload_dir = __DIR__ . '/../uploads/returns/';
+                    if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+                    if (!move_uploaded_file($_FILES['return_image']['tmp_name'], $upload_dir . $return_image)) {
+                        $return_image = null;
+                    }
+                }
             }
         }
 
-        $checkStmt = $pdo->prepare("SELECT id FROM bookings WHERE id = ? AND user_id = ? AND status = 'approved'");
+        $checkStmt = $pdo->prepare("SELECT id FROM bookings WHERE id = ? AND user_id = ? AND booking_type = 'equipment' AND status IN ('approved','pending_return')");
         $checkStmt->execute([$booking_id, $user_id]);
         if ($checkStmt->fetch()) {
-            if ($return_image) {
-                $pdo->prepare("UPDATE bookings SET status = 'pending_return', return_image_path = ? WHERE id = ?")->execute([$return_image, $booking_id]);
-            } else {
-                // ไม่มีรูป → pending_return เหมือนกัน แต่ไม่มี return_image_path
-                $pdo->prepare("UPDATE bookings SET status = 'pending_return' WHERE id = ?")->execute([$booking_id]);
-            }
-            $pdo->prepare("INSERT INTO feeds (booking_id, message) VALUES (?, ?)")->execute([$booking_id, "ส่งคืนอุปกรณ์ 📦 พร้อมหลักฐาน — รอ admin ตรวจสอบ"]);
-            $success = "ส่งคืนเรียบร้อย! รอผู้ดูแลระบบตรวจสอบ";
+            try {
+                $pdo->beginTransaction();
+                if ($return_image) {
+                    $pdo->prepare("UPDATE bookings SET status = 'pending_return', return_image_path = ? WHERE id = ?")->execute([$return_image, $booking_id]);
+                } else {
+                    $pdo->prepare("UPDATE bookings SET status = 'pending_return' WHERE id = ?")->execute([$booking_id]);
+                }
+                $pdo->prepare("INSERT INTO feeds (booking_id, message) VALUES (?, ?)")->execute([$booking_id, "ส่งคืนอุปกรณ์ 📦 พร้อมหลักฐาน — รอ admin ตรวจสอบ"]);
+                $pdo->commit();
+                $success = "ส่งคืนเรียบร้อย! รอผู้ดูแลระบบตรวจสอบ";
+            } catch (Exception $e) { $pdo->rollBack(); $error = "เกิดข้อผิดพลาด กรุณาลองใหม่"; }
         } else { $error = "ไม่พบรายการนี้หรือไม่สามารถคืนได้"; }
     }
 }
@@ -181,10 +194,12 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
-var _bn = document.getElementById('bottom-nav');
+var _bn = null;
+document.addEventListener('DOMContentLoaded', function(){ _bn = document.getElementById('bottom-nav'); });
+
 function openReturnModal(id){
     document.getElementById('return_booking_id').value=id;
-    window.scrollTo({top:0, behavior:'instant'});
+    window.scrollTo(0,0);
     document.getElementById('returnModal').classList.add('open');
     document.body.style.overflow='hidden';
     if (_bn){ _bn.style.pointerEvents='none'; _bn.style.visibility='hidden'; }
@@ -194,7 +209,9 @@ function closeReturnModal(){
     document.body.style.overflow='';
     if (_bn){ _bn.style.pointerEvents=''; _bn.style.visibility=''; }
 }
-document.getElementById('returnModal').addEventListener('click',function(e){if(e.target===this)closeReturnModal();});
+document.addEventListener('DOMContentLoaded',function(){
+    document.getElementById('returnModal').addEventListener('click',function(e){if(e.target===this)closeReturnModal();});
+});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeReturnModal();});
 </script>
 

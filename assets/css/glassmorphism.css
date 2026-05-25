@@ -45,7 +45,8 @@ body{
     background:var(--bg);color:var(--text);
     min-height:100vh;min-height:100dvh;
     -webkit-font-smoothing:antialiased;
-    padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + 8px);
+    /* BUG-020: guest pages ไม่มี bottom-nav — padding จะถูก override โดย .has-bottom-nav */
+    padding-bottom:1rem;
     /* ไม่ใส่ overflow-x:hidden บน body เพราะจะทำให้ position:fixed ติดขัดบน iOS */
 }
 img{max-width:100%;height:auto}
@@ -147,6 +148,12 @@ a:hover{color:var(--primary-hover)}
 .bottom-nav a.active,.bottom-nav a:hover{color:var(--primary)}
 .bottom-nav a.active i{transform:scale(1.1)}
 
+/* BUG-020: เฉพาะหน้าที่มี bottom-nav (logged-in) จึงเพิ่ม padding-bottom */
+@media (max-width:950px){
+    body.has-bottom-nav{
+        padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + 8px);
+    }
+}
 /* เมื่อเมนูเปิด — ล็อก scroll แบบ iOS-safe (ไม่ใช้ body overflow:hidden) */
 html.menu-open{overflow:hidden}
 html.menu-open body{overflow:hidden;touch-action:none}
@@ -655,6 +662,8 @@ textarea.form-control{resize:vertical;min-height:80px}
 /* === Hover Animations === */
 .glass-card{transition:transform .25s cubic-bezier(.4,0,.2,1),box-shadow .25s,border-color .25s}
 .glass-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.1),var(--card-glow);border-color:rgba(242,83,28,.18)}
+/* BUG-019: modal ใช้ glass-card ด้วย — ห้ามเด้งตอน hover */
+.modal-inner:hover,.modal-overlay .glass-card:hover,.modal-legacy .glass-card:hover{transform:none !important;box-shadow:var(--card-shadow),var(--card-glow)}
 
 .stat-card{transition:transform .25s cubic-bezier(.4,0,.2,1),box-shadow .25s,border-color .25s}
 .stat-card:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 12px 28px rgba(0,0,0,.08);border-color:rgba(242,83,28,.2)}

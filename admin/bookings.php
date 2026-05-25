@@ -37,6 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Handle return image upload — ตรวจสอบทั้ง extension และ MIME type จริง
         $return_image = null;
         if ($action === 'return' && isset($_FILES['return_image']) && $_FILES['return_image']['error'] === UPLOAD_ERR_OK) {
+            /* BUG-004: ตรวจขนาดไฟล์ (สูงสุด 8 MB) */
+            if ($_FILES['return_image']['size'] > 8 * 1024 * 1024) {
+                throw new Exception('ไฟล์ใหญ่เกิน 8 MB');
+            }
             $ext = strtolower(pathinfo($_FILES['return_image']['name'], PATHINFO_EXTENSION));
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mime  = finfo_file($finfo, $_FILES['return_image']['tmp_name']);
@@ -46,7 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $return_image = 'return_' . $booking_id . '_' . time() . '.' . $allowedMimes[$mime];
                 $upload_dir = __DIR__ . '/../uploads/returns/';
                 if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
-                move_uploaded_file($_FILES['return_image']['tmp_name'], $upload_dir . $return_image);
+                /* BUG-005: ตรวจ return value ของ move_uploaded_file */
+                if (!move_uploaded_file($_FILES['return_image']['tmp_name'], $upload_dir . $return_image)) {
+                    $return_image = null; // อัปโหลดล้มเหลว — ไม่ save path ลง DB
+                }
             }
         }
 
@@ -294,11 +301,13 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
-var _bn = document.getElementById('bottom-nav');
+/* BUG-022 fix: ต้องรอ DOM load ครบก่อน — #bottom-nav อยู่ใน footer.php ซึ่ง render หลัง script นี้ */
+var _bn = null;
+document.addEventListener('DOMContentLoaded', function(){ _bn = document.getElementById('bottom-nav'); });
+
 function openReturnModal(bookingId) {
     document.getElementById('return_booking_id').value = bookingId;
-    /* scroll to top ก่อน — ป้องกัน Android WebView render fixed modal ผิดตำแหน่ง */
-    window.scrollTo({top: 0, behavior: 'instant'});
+    window.scrollTo(0, 0); /* BUG-024 fix: ใช้ legacy form รองรับ Safari/Android เก่า */
     document.getElementById('returnModal').classList.add('open');
     document.body.style.overflow = 'hidden';
     if (_bn) { _bn.style.pointerEvents = 'none'; _bn.style.visibility = 'hidden'; }
@@ -308,8 +317,10 @@ function closeReturnModal() {
     document.body.style.overflow = '';
     if (_bn) { _bn.style.pointerEvents = ''; _bn.style.visibility = ''; }
 }
-document.getElementById('returnModal').addEventListener('click', function(e) {
-    if (e.target === this) closeReturnModal();
+document.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('returnModal').addEventListener('click', function(e) {
+        if (e.target === this) closeReturnModal();
+    });
 });
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeReturnModal(); });
 </script>
