@@ -615,3 +615,163 @@ C:\Users\weerapat\cloudflared.exe tunnel --url http://localhost:80
 | `admin/contact_manage.php` | LEFT JOIN, XSS fix |
 | `admin/tasks.php` | XSS, email student_id |
 | `admin/inventory.php` | XSS fix |
+
+---
+
+## 🔒 Security & Stability Hardening (2026-05-26)
+
+### บัคที่ตรวจพบจาก Code Review (3 จุด)
+
+#### 1. `admin/bookings.php` — `throw new Exception` อยู่นอก try/catch → HTTP 500
+- **สาเหตุ:** ตรวจขนาดไฟล์เกิน 8MB แล้ว `throw new Exception(...)` แต่ block นั้นอยู่นอก try/catch → server crash 500 ทันที
+- **แก้:** เปลี่ยนเป็น `$error = 'ไฟล์ใหญ่เกิน 8 MB'` แล้วใช้ `if (empty($error)):` ... `endif;` คลุม transaction block
+
+#### 2. `member/my_bookings.php` — fallthrough หลังตั้ง `$error` → DB update ยังทำงานต่อ
+- **สาเหตุ:** ไฟล์เกิน 8MB ตั้ง `$error` แต่ code ด้านล่างยังรัน `UPDATE bookings SET status = 'pending_return'` ต่อ → booking เปลี่ยนสถานะโดยไม่มีรูปหลักฐาน
+- **แก้:** เพิ่ม `if (empty($error)):` guard ครอบ `$checkStmt` และ transaction block ทั้งหมด
+
+#### 3. `member/my_bookings.php` — feed message แสดง "พร้อมหลักฐาน" เสมอแม้ไม่มีรูป
+- **สาเหตุ:** `$feedReturnMsg` ถูก hardcode เป็น "ส่งคืนอุปกรณ์ 📦 พร้อมหลักฐาน" โดยไม่ check ว่ามีรูปจริงหรือเปล่า
+- **แก้:** เปลี่ยนเป็น ternary: `$return_image ? "...พร้อมหลักฐาน..." : "...(ไม่มีรูป)..."`
+
+---
+
+### CSRF Protection — ป้องกัน Cross-Site Request Forgery ทุกหน้า
+
+**`config/database.php`** — เพิ่ม helper functions 3 ตัวที่ global scope:
+```php
+function csrf_token(): string   // สร้าง/คืน token ใน $_SESSION['csrf_token']
+function csrf_input(): string   // คืน <input type="hidden" name="_csrf" value="...">
+function csrf_verify(): bool    // ตรวจ hash_equals($stored, $submitted)
+```
+- ใช้ `bin2hex(random_bytes(32))` — cryptographically secure
+- ตรวจสอบด้วย `hash_equals()` ป้องกัน timing attack
+
+**ไฟล์ที่เพิ่ม CSRF:**
+| ไฟล์ | สิ่งที่เพิ่ม |
+|---|---|
+| `auth/login.php` | `csrf_verify()` ต้นฟอร์ม + `<?php echo csrf_input();?>` ในฟอร์ม |
+| `auth/register.php` | `csrf_verify()` + `csrf_input()` ในฟอร์ม |
+| `member/borrow_form.php` | `csrf_verify()` + `csrf_input()` |
+| `member/my_bookings.php` | `csrf_verify()` + `csrf_input()` ในทุก form (cancel, return modal, mobile) |
+| `member/profile.php` | `csrf_verify()` + `csrf_input()` |
+| `member/my_tasks.php` | `csrf_verify()` + `csrf_input()` |
+| `guest/studio_booking.php` | `csrf_verify()` + `csrf_input()` |
+| `admin/bookings.php` | `csrf_verify()` + `csrf_input()` ในทุก form (approve, reject, return) |
+| `admin/inventory.php` | `csrf_verify()` + `csrf_input()` ในทุก 5 form |
+| `admin/tasks.php` | `csrf_verify()` + `csrf_input()` ในทุก form (create, update, delete) |
+| `admin/contact_manage.php` | `csrf_verify()` + `csrf_input()` ในทุก form |
+
+> `admin/users.php` มีระบบ CSRF เดิมอยู่แล้วด้วย `hash_equals()` + `$_SESSION['csrf_token']` — compatible กัน ไม่ต้องแก้
+
+---
+
+### Login Rate Limiting — ป้องกัน Brute Force
+
+**`config/database.php`** — เพิ่ม constants + helper functions:
+```php
+define('LOGIN_MAX_ATTEMPTS', 5);   // พยายามได้ 5 ครั้ง
+define('LOGIN_LOCKOUT_SECS', 300); // ล็อก 5 นาที
+function login_attempts(): int     // อ่านจำนวนครั้งจาก $_SESSION
+function login_locked(): bool      // ตรวจว่าถูก lock อยู่หรือเปล่า (auto-reset เมื่อหมดเวลา)
+function login_record_fail(): void // เพิ่มนับ + บันทึก timestamp
+function login_reset(): void       // reset counter หลัง login สำเร็จ
+function login_wait_secs(): int    // คำนวณวินาทีที่เหลือ
+```
+
+**`auth/login.php`** — เพิ่ม flow:
+```php
+if (!csrf_verify()) { $error = '...'; }
+elseif (login_locked()) { $error = 'พยายามมากเกินไป รอ X วินาที'; }
+else {
+    if (password_verify(...)) { login_reset(); ... }
+    else { login_record_fail(); usleep(300000); $error = '...'; }
+}
+```
+- `usleep(300000)` = หน่วงเวลา 300ms ทุกครั้ง login ผิด → ป้องกัน timing attack
+
+---
+
+### `.htaccess` — Session Cookie & HTTP Security Headers (ไฟล์ใหม่)
+
+สร้างไฟล์ `C:\xampp\htdocs\IE-Photo-WEB\.htaccess`:
+
+```apache
+# Session cookie hardening
+php_value session.cookie_httponly  1    # JS ไม่เข้าถึง cookie ได้
+php_value session.cookie_samesite  Strict
+php_value session.use_strict_mode  1
+php_value session.use_only_cookies 1
+php_value session.use_trans_sid    0    # ปิด session ID ใน URL
+
+# HTTP Security Headers
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options       "SAMEORIGIN"
+Header always set Referrer-Policy       "strict-origin-when-cross-origin"
+
+# ปิดการเข้าถึงไฟล์ sensitive
+<FilesMatch "\.(env|log|sql|md|json|lock)$">
+    Require all denied
+</FilesMatch>
+
+# ปิด Directory listing
+Options -Indexes
+
+# บล็อกการเข้าถึง config/ และ includes/ โดยตรง
+RewriteRule ^config/  - [F,L]
+RewriteRule ^includes/ - [F,L]
+```
+
+> เหตุผล: `session_start()` ถูกเรียกก่อน `require_once database.php` ทุกหน้า → `ini_set()` ใน PHP ไม่สามารถตั้งค่า cookie flags ของ session ที่เปิดไปแล้วได้ → ต้องใช้ `.htaccess` `php_value` ที่ apply ก่อน PHP script ทำงาน
+
+---
+
+### File Upload Hardening
+
+**`admin/bookings.php`** + **`member/my_bookings.php`** + **`member/borrow_form.php`**:
+- จำกัดขนาดไฟล์ **8 MB** ก่อนประมวลผล (ป้องกัน DoS จากไฟล์ขนาดใหญ่)
+- ตรวจ return value ของ `move_uploaded_file()` — ถ้า return false → ตั้ง error ไม่บันทึก path
+
+**`member/profile.php`**:
+- จำกัดขนาดไฟล์ **4 MB** สำหรับรูปโปรไฟล์
+- เพิ่ม `if (!$error)` guard ก่อนเริ่ม upload processing
+
+**`member/borrow_form.php`**:
+- เพิ่ม `htmlspecialchars($success, ENT_QUOTES, 'UTF-8')` สำหรับ success message — ป้องกัน XSS จากชื่ออุปกรณ์
+- จัดการ `UPLOAD_ERR_NO_FILE` แยกจาก error อื่น
+
+---
+
+### `guest/studio_booking.php` — Validation & Error Isolation
+
+- เพิ่ม `filter_var($guest_email, FILTER_VALIDATE_EMAIL)` ก่อน INSERT
+- ครอบ INSERT ด้วย try/catch — error แสดงให้ user เห็นแทน 500
+- แยก email notification ออกเป็น try/catch อิสระ — ถ้าส่ง email ล้มเหลวจะ `error_log()` เท่านั้น ไม่ rollback booking
+
+---
+
+### `admin/bookings.php` — Query Performance
+
+- เพิ่ม `LIMIT 300` ใน main SELECT query — ป้องกันหน้าพังถ้ามี booking จำนวนมากมาก
+
+---
+
+### สรุปไฟล์ที่ถูกแก้ในรอบนี้
+
+| ไฟล์ | สิ่งที่แก้ |
+|---|---|
+| `.htaccess` | **ไฟล์ใหม่** — session cookie hardening + HTTP headers + block sensitive paths |
+| `config/database.php` | CSRF helper functions + login rate limiting + `define()` แทน `const` |
+| `auth/login.php` | CSRF verify + rate limiting + `usleep(300000)` timing delay |
+| `auth/register.php` | CSRF verify + csrf_input |
+| `guest/studio_booking.php` | CSRF + email validation + try/catch + non-critical email isolation |
+| `member/borrow_form.php` | CSRF + 8MB size limit + move_uploaded_file check + htmlspecialchars($success) |
+| `member/my_bookings.php` | CSRF + fallthrough guard + feed message fix + 8MB limit |
+| `member/profile.php` | CSRF + 4MB size limit + error guard |
+| `member/my_tasks.php` | CSRF verify + csrf_input |
+| `admin/bookings.php` | CSRF + exception→error fix + if(empty($error)) guard + LIMIT 300 |
+| `admin/inventory.php` | CSRF verify + csrf_input ทุก form |
+| `admin/tasks.php` | CSRF verify + csrf_input ทุก form |
+| `admin/contact_manage.php` | CSRF verify + csrf_input ทุก form |
+
+*อัปเดต: 2026-05-26 — commit `83c3db1` (security: CSRF protection + stability hardening across all pages)*
