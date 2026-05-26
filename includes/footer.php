@@ -10,6 +10,7 @@
 
     <!-- Bottom Navigation (Mobile) -->
     <?php if(isset($_SESSION['user_id'])): ?>
+    <script>document.body.classList.add('has-bottom-nav');</script>
     <nav class="bottom-nav" id="bottom-nav">
         <div class="bottom-nav-inner">
             <?php if($_SESSION['role'] === 'admin'): ?>
@@ -64,17 +65,47 @@
     <script src="<?php echo isset($base_url) ? $base_url : '../'; ?>assets/js/ajax-handler.js"></script>
 
     <script>
-    /* Toast helper */
-    function showToast(msg, type) {
+    /* Toast helper — canonical definition */
+    function showToast(msg, type, duration) {
         const c = document.getElementById('toast-container');
         if (!c) return;
+        duration = duration || 4000;
+
+        const icons  = {success:'✅', error:'❌', danger:'❌', info:'ℹ️', warning:'⚠️'};
+        const colors = {success:'var(--success)', error:'var(--danger)', danger:'var(--danger)', warning:'var(--warning)', info:'var(--info)'};
+        const color  = colors[type] || 'var(--info)';
+
         const t = document.createElement('div');
         t.className = 'toast';
-        const icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
-        t.innerHTML = (icons[type]||'ℹ️') + ' ' + msg;
+        t.style.borderLeft = '3px solid ' + color;
+        t.innerHTML =
+            '<span style="font-size:1.1rem">' + (icons[type] || 'ℹ️') + '</span>' +
+            '<span style="flex:1">' + msg + '</span>' +
+            '<button onclick="this.closest(\'.toast\').remove()" ' +
+            'style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0 0 0 8px;font-size:1rem;line-height:1">✕</button>';
+        t.style.display = 'flex';
+        t.style.alignItems = 'center';
+        t.style.gap = '10px';
+
+        // Progress bar
+        const bar = document.createElement('div');
+        bar.style.cssText = 'position:absolute;bottom:0;left:0;height:2px;border-radius:0 0 var(--radius-sm) var(--radius-sm);background:' + color +
+            ';opacity:.4;width:100%;transform-origin:left;animation:dismissBar ' + (duration/1000) + 's linear forwards';
+        t.style.position = 'relative';
+        t.style.overflow = 'hidden';
+        t.appendChild(bar);
+
         c.appendChild(t);
-        requestAnimationFrame(() => { t.classList.add('show'); });
-        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+        requestAnimationFrame(() => t.classList.add('show'));
+        const timer = setTimeout(() => dismiss(t), duration);
+        t.addEventListener('mouseenter', () => clearTimeout(timer));
+        t.addEventListener('mouseleave', () => setTimeout(() => dismiss(t), 1500));
+    }
+
+    function dismiss(t) {
+        t.classList.add('hiding');
+        t.classList.remove('show');
+        setTimeout(() => t.remove(), 350);
     }
     </script>
 </body>

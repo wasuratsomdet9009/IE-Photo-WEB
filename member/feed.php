@@ -10,6 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
+// Show only studio feeds (booking_id IS NULL) and feeds related to the current user's own bookings
 $query = "
     SELECT f.id as feed_id, f.message, f.created_at,
            (SELECT COUNT(*) FROM feed_likes WHERE feed_id = f.id) as like_count,
@@ -17,12 +18,14 @@ $query = "
            b.status as booking_status,
            b.form_image_path
     FROM feeds f
-    JOIN bookings b ON f.booking_id = b.id
+    LEFT JOIN bookings b ON f.booking_id = b.id
+    WHERE f.booking_id IS NULL
+       OR b.user_id = :user_id2
     ORDER BY f.created_at DESC
     LIMIT 50
 ";
 $stmt = $pdo->prepare($query);
-$stmt->execute(['user_id' => $user_id]);
+$stmt->execute(['user_id' => $user_id, 'user_id2' => $user_id]);
 $feeds = $stmt->fetchAll();
 
 $base_url = '../';
@@ -41,7 +44,7 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 <?php endif; ?>
 
-<div style="max-width:700px; margin:0 auto;">
+<div class="page-container-md">
     <?php if(empty($feeds)): ?>
         <div class="glass-card empty-state">
             <i class="ph ph-calendar-blank"></i>
@@ -62,9 +65,9 @@ require_once __DIR__ . '/../includes/header.php';
                     <img src="<?php echo htmlspecialchars($base_url . 'uploads/booking_forms/' . $feed['form_image_path']); ?>" alt="Activity" class="feed-image" onerror="this.style.display='none'">
                 <?php endif; ?>
                 <div class="feed-body">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.4rem;margin-bottom:.8rem;">
                         <span class="badge <?php echo $badgeClass; ?>"><?php echo $statusLabel; ?></span>
-                        <span style="font-size:.78rem;color:var(--text-muted);"><i class="ph ph-clock"></i> <?php echo date('d M Y, H:i', strtotime($feed['created_at'])); ?></span>
+                        <span style="font-size:.78rem;color:var(--text-muted);white-space:nowrap;"><i class="ph ph-clock"></i> <?php echo date('d M Y, H:i', strtotime($feed['created_at'])); ?></span>
                     </div>
                     <p style="font-size:1rem;line-height:1.6;margin-bottom:1.2rem;"><?php echo htmlspecialchars($feed['message']); ?></p>
                     <div style="border-top:1px solid var(--border);padding-top:.8rem;display:flex;align-items:center;">

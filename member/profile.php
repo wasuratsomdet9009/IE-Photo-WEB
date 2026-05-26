@@ -19,13 +19,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
         $tmp_name = $_FILES['profile_image']['tmp_name'];
         $ext = strtolower(pathinfo(basename($_FILES['profile_image']['name']), PATHINFO_EXTENSION));
-        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif'])) {
-            $new_name = $user_id . '_' . time() . '.' . $ext;
+        // ตรวจสอบ MIME type จริง ไม่ใช่แค่ extension
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime  = finfo_file($finfo, $tmp_name);
+        finfo_close($finfo);
+        $allowedMimes = ['image/jpeg'=>'jpg','image/png'=>'png','image/gif'=>'gif','image/webp'=>'webp'];
+        if (in_array($ext, ['jpg','jpeg','png','gif','webp']) && isset($allowedMimes[$mime])) {
+            $new_name = $user_id . '_' . time() . '.' . $allowedMimes[$mime];
             $upload_dir = __DIR__ . '/../uploads/profiles/';
             if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
             if (move_uploaded_file($tmp_name, $upload_dir . $new_name)) { $profile_image = $new_name; }
             else { $error = 'อัปโหลดรูปไม่สำเร็จ'; }
-        } else { $error = 'รูปแบบไฟล์ไม่รองรับ'; }
+        } else { $error = 'รูปแบบไฟล์ไม่รองรับ (รองรับ JPG, PNG, GIF, WebP)'; }
     }
 
     if (!$error) {
@@ -45,7 +50,7 @@ $base_url = '../';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div style="max-width:550px;margin:0 auto;">
+<div class="page-container-sm">
     <div class="page-header">
         <h2>ข้อมูลส่วนตัว</h2>
         <p>จัดการข้อมูลและรูปโปรไฟล์ของคุณ</p>
@@ -86,7 +91,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             <div class="form-group">
                 <label for="phone"><i class="ph ph-phone"></i> เบอร์โทรศัพท์ติดต่อ</label>
-                <input type="text" id="phone" name="phone" class="form-control" value="<?php echo htmlspecialchars($user['phone']);?>" placeholder="0XXXXXXXXX">
+                <input type="text" id="phone" name="phone" class="form-control" value="<?php echo htmlspecialchars($user['phone'] ?? '');?>" placeholder="0XXXXXXXXX">
             </div>
 
             <input type="hidden" name="current_image" value="<?php echo htmlspecialchars($user['profile_image']);?>">

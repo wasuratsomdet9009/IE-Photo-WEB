@@ -32,17 +32,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($booking_id > 0 && in_array($action, ['approve', 'reject', 'return'])) {
-        $status = $action === 'return' ? 'returned' : $action . 'd';
+        $status = match($action) { 'approve'=>'approved', 'reject'=>'rejected', 'return'=>'returned', default=>$action };
 
-        // Handle return image upload
+        // Handle return image upload — ตรวจสอบทั้ง extension และ MIME type จริง
         $return_image = null;
         if ($action === 'return' && isset($_FILES['return_image']) && $_FILES['return_image']['error'] === UPLOAD_ERR_OK) {
+            /* BUG-004: ตรวจขนาดไฟล์ (สูงสุด 8 MB) */
+            if ($_FILES['return_image']['size'] > 8 * 1024 * 1024) {
+                throw new Exception('ไฟล์ใหญ่เกิน 8 MB');
+            }
             $ext = strtolower(pathinfo($_FILES['return_image']['name'], PATHINFO_EXTENSION));
-            if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
-                $return_image = 'return_' . $booking_id . '_' . time() . '.' . $ext;
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $_FILES['return_image']['tmp_name']);
+            finfo_close($finfo);
+            $allowedMimes = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
+            if (in_array($ext, ['jpg','jpeg','png','webp']) && isset($allowedMimes[$mime])) {
+                $return_image = 'return_' . $booking_id . '_' . time() . '.' . $allowedMimes[$mime];
                 $upload_dir = __DIR__ . '/../uploads/returns/';
                 if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
-                move_uploaded_file($_FILES['return_image']['tmp_name'], $upload_dir . $return_image);
+                /* BUG-005: ตรวจ return value ของ move_uploaded_file */
+                if (!move_uploaded_file($_FILES['return_image']['tmp_name'], $upload_dir . $return_image)) {
+                    $return_image = null; // อัปโหลดล้มเหลว — ไม่ save path ลง DB
+                }
             }
         }
 
@@ -74,11 +85,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userEmail = $b['member_email'] ?: ($b['guest_email'] ?? '');
             $userName = $b['student_id'] ?: ($b['guest_name'] ?? 'Guest');
 
-            // Update equipment status
+            // Update equipment status — ตรวจสอบ action ก่อนเปลี่ยน
             if ($b['booking_type'] === 'equipment') {
-                $eqStatus = ($action === 'approve') ? 'borrowed' : 'available';
-                $eqUpdate = $pdo->prepare("UPDATE equipments SET status = ? WHERE id = ?");
-                $eqUpdate->execute([$eqStatus, $b['item_id']]);
+                if ($action === 'approve') {
+                    // อนุมัติ → set borrowed
+                    $eqUpdate = $pdo->prepare("UPDATE equipments SET status = 'borrowed' WHERE id = ?");
+                    $eqUpdate->execute([$b['item_id']]);
+                } elseif ($action === 'return') {
+                    // คืนแล้ว → set available
+                    $eqUpdate = $pdo->prepare("UPDATE equipments SET status = 'available' WHERE id = ?");
+                    $eqUpdate->execute([$b['item_id']]);
+                }
+                // reject บน pending booking → ไม่ต้องเปลี่ยน equipment status (ยังไม่ถูก approve)
             }
 
             // Feed entry
@@ -119,6 +137,8 @@ $where = '';
 if ($filter === 'pending') $where = "WHERE b.status = 'pending'";
 elseif ($filter === 'approved') $where = "WHERE b.status = 'approved'";
 elseif ($filter === 'rejected') $where = "WHERE b.status = 'rejected'";
+elseif ($filter === 'pending_return') $where = "WHERE b.status = 'pending_return'";
+elseif ($filter === 'returned') $where = "WHERE b.status = 'returned'";
 
 $query = "
     SELECT b.id, b.booking_type, b.start_datetime, b.end_datetime, b.status,
@@ -159,21 +179,24 @@ require_once __DIR__ . '/../includes/header.php';
     <p>ตรวจสอบ อนุมัติ หรือปฏิเสธคำขอการใช้งาน</p>
 </div>
 
-<div class="flex-between" style="margin-bottom:1.2rem;flex-wrap:wrap;gap:.8rem;">
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+<div class="flex-between" style="margin-bottom:1.2rem;">
+    <div class="filter-bar">
         <a href="bookings.php" class="btn <?php echo $filter==='all'?'btn-primary':'btn-outline'; ?> btn-sm">ทั้งหมด</a>
         <a href="bookings.php?filter=pending" class="btn <?php echo $filter==='pending'?'btn-primary':'btn-outline'; ?> btn-sm">รอตรวจสอบ</a>
         <a href="bookings.php?filter=approved" class="btn <?php echo $filter==='approved'?'btn-primary':'btn-outline'; ?> btn-sm">อนุมัติแล้ว</a>
+        <a href="bookings.php?filter=pending_return" class="btn <?php echo $filter==='pending_return'?'btn-primary':'btn-outline'; ?> btn-sm" style="<?php echo $filter==='pending_return'?'':'color:var(--warning);border-color:var(--warning);'; ?>">รอตรวจคืน</a>
+        <a href="bookings.php?filter=returned" class="btn <?php echo $filter==='returned'?'btn-primary':'btn-outline'; ?> btn-sm">คืนแล้ว</a>
         <a href="bookings.php?filter=rejected" class="btn <?php echo $filter==='rejected'?'btn-primary':'btn-outline'; ?> btn-sm">ปฏิเสธแล้ว</a>
     </div>
     <a href="bookings.php?export=csv" class="btn btn-outline btn-sm"><i class="ph-bold ph-download-simple"></i> ส่งออก CSV</a>
 </div>
 
-<?php if($success): ?><div class="alert alert-success"><i class="ph-bold ph-check-circle"></i> <?php echo $success; ?></div><?php endif; ?>
+<?php if($success): ?><div class="alert alert-success"><i class="ph-bold ph-check-circle"></i> <?php echo htmlspecialchars($success); ?></div><?php endif; ?>
 <?php if($error): ?><div class="alert alert-danger"><i class="ph-bold ph-warning-circle"></i> <?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 
 <!-- Desktop Table -->
 <div class="glass-card desktop-table" style="padding:1rem;">
+    <p class="table-scroll-hint"><i class="ph ph-arrow-left"></i> เลื่อนดูข้อมูลเพิ่มเติม <i class="ph ph-arrow-right"></i></p>
     <div class="table-responsive">
         <table class="glass-table">
             <thead><tr>
@@ -208,8 +231,8 @@ require_once __DIR__ . '/../includes/header.php';
                     <td>
                         <?php if($b['status']==='pending'):?>
                             <div style="display:flex;gap:.3rem;">
-                                <form method="POST" onsubmit="return confirm('อนุมัติ?')"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="approve" class="btn btn-success btn-sm" style="padding:.35rem .6rem;"><i class="ph-bold ph-check"></i></button></form>
-                                <form method="POST" onsubmit="return confirm('ปฏิเสธ?')"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="reject" class="btn btn-danger btn-sm" style="padding:.35rem .6rem;"><i class="ph-bold ph-x"></i></button></form>
+                                <form method="POST"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="approve" class="btn btn-success btn-sm" style="padding:.35rem .6rem;"><i class="ph-bold ph-check"></i></button></form>
+                                <form method="POST"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="reject" class="btn btn-danger btn-sm" style="padding:.35rem .6rem;"><i class="ph-bold ph-x"></i></button></form>
                             </div>
                         <?php elseif(($b['status']==='approved' || $b['status']==='pending_return') && $b['booking_type']==='equipment'):?>
                             <button class="btn btn-outline btn-sm" style="color:var(--info);border-color:var(--info);" onclick="openReturnModal(<?php echo $b['id'];?>)"><i class="ph-bold ph-arrow-counter-clockwise"></i> คืน</button>
@@ -243,8 +266,8 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="mc-row"><span class="mc-label">สิ้นสุด</span><span style="color:var(--danger);font-size:.85rem;"><?php echo date('d M Y, H:i',strtotime($b['end_datetime']));?></span></div>
             <?php if($b['status']==='pending'):?>
             <div class="mc-actions">
-                <form method="POST" onsubmit="return confirm('อนุมัติ?')" style="flex:1"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="approve" class="btn btn-success btn-sm w-100"><i class="ph-bold ph-check"></i> อนุมัติ</button></form>
-                <form method="POST" onsubmit="return confirm('ปฏิเสธ?')" style="flex:1"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="reject" class="btn btn-danger btn-sm w-100"><i class="ph-bold ph-x"></i> ปฏิเสธ</button></form>
+                <form method="POST" style="flex:1"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="approve" class="btn btn-success btn-sm w-100"><i class="ph-bold ph-check"></i> อนุมัติ</button></form>
+                <form method="POST" style="flex:1"><input type="hidden" name="booking_id" value="<?php echo $b['id'];?>"><button name="action" value="reject" class="btn btn-danger btn-sm w-100"><i class="ph-bold ph-x"></i> ปฏิเสธ</button></form>
             </div>
             <?php elseif(($b['status']==='approved' || $b['status']==='pending_return') && $b['booking_type']==='equipment'):?>
             <div class="mc-actions">
@@ -257,10 +280,10 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <!-- Return Modal -->
-<div id="returnModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);display:none;justify-content:center;align-items:center;padding:1rem;">
-    <div class="glass-card" style="max-width:450px;width:100%;position:relative;">
-        <button onclick="closeReturnModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);"><i class="ph-bold ph-x"></i></button>
-        <h3 style="font-size:1.1rem;margin-bottom:1rem;"><i class="ph-bold ph-camera"></i> คืนอุปกรณ์พร้อมหลักฐาน</h3>
+<div id="returnModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="adminReturnTitle">
+    <div class="glass-card modal-inner" style="max-width:450px;">
+        <button onclick="closeReturnModal()" aria-label="ปิด" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;"><i class="ph-bold ph-x"></i></button>
+        <h3 id="adminReturnTitle" style="font-size:1.1rem;margin-bottom:1rem;"><i class="ph-bold ph-camera"></i> คืนอุปกรณ์พร้อมหลักฐาน</h3>
         <form method="POST" enctype="multipart/form-data" id="returnForm">
             <input type="hidden" name="booking_id" id="return_booking_id" value="">
             <input type="hidden" name="action" value="return">
@@ -269,7 +292,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="upload-zone">
                     <i class="ph-bold ph-camera"></i>
                     <p>ถ่ายรูปอุปกรณ์เพื่อยืนยันสภาพ</p>
-                    <input type="file" name="return_image" accept="image/*" capture="environment">
+                    <input type="file" name="return_image" accept="image/*">
                 </div>
             </div>
             <button type="submit" class="btn btn-primary w-100"><i class="ph-bold ph-check-circle"></i> ยืนยันการคืน</button>
@@ -278,17 +301,28 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
+/* BUG-022 fix: ต้องรอ DOM load ครบก่อน — #bottom-nav อยู่ใน footer.php ซึ่ง render หลัง script นี้ */
+var _bn = null;
+document.addEventListener('DOMContentLoaded', function(){ _bn = document.getElementById('bottom-nav'); });
+
 function openReturnModal(bookingId) {
     document.getElementById('return_booking_id').value = bookingId;
-    const modal = document.getElementById('returnModal');
-    modal.style.display = 'flex';
+    window.scrollTo(0, 0); /* BUG-024 fix: ใช้ legacy form รองรับ Safari/Android เก่า */
+    document.getElementById('returnModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (_bn) { _bn.style.pointerEvents = 'none'; _bn.style.visibility = 'hidden'; }
 }
 function closeReturnModal() {
-    document.getElementById('returnModal').style.display = 'none';
+    document.getElementById('returnModal').classList.remove('open');
+    document.body.style.overflow = '';
+    if (_bn) { _bn.style.pointerEvents = ''; _bn.style.visibility = ''; }
 }
-document.getElementById('returnModal').addEventListener('click', function(e) {
-    if (e.target === this) closeReturnModal();
+document.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('returnModal').addEventListener('click', function(e) {
+        if (e.target === this) closeReturnModal();
+    });
 });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeReturnModal(); });
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

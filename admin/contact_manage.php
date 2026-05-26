@@ -16,17 +16,20 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['send_reminder'])) {
         $booking_id = intval($_POST['booking_id'] ?? 0);
-        $custom_msg = trim($_POST['custom_msg'] ?? '');
+        // Sanitize custom_msg ก่อน embed ใน HTML email
+        $custom_msg = htmlspecialchars(trim($_POST['custom_msg'] ?? ''), ENT_QUOTES, 'UTF-8');
         $stmt = $pdo->prepare("
             SELECT b.*, u.email, u.student_id, e.name as eq_name
-            FROM bookings b JOIN users u ON b.user_id = u.id JOIN equipments e ON b.item_id = e.id
+            FROM bookings b
+            LEFT JOIN users u ON b.user_id = u.id
+            LEFT JOIN equipments e ON b.item_id = e.id AND b.booking_type = 'equipment'
             WHERE b.id = ? AND b.booking_type = 'equipment'
         ");
         $stmt->execute([$booking_id]);
         $b = $stmt->fetch();
         if ($b && $b['email']) {
-            $emailBody = getReminderEmailTemplate($b['student_id'], $b['eq_name'], $custom_msg);
-            sendEmail($b['email'], "แจ้งเตือนการคืนอุปกรณ์: {$b['eq_name']}", $emailBody);
+            $emailBody = getReminderEmailTemplate($b['student_id'], $b['eq_name'] ?? '-', $custom_msg);
+            sendEmail($b['email'], "แจ้งเตือนการคืนอุปกรณ์: " . ($b['eq_name'] ?? '-'), $emailBody);
             $success = "ส่งอีเมลแจ้งเตือนถึง {$b['student_id']} แล้ว";
         } else { $error = "ไม่พบข้อมูลสมาชิก"; }
     } elseif (isset($_POST['resolve_call'])) {
@@ -36,9 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// LEFT JOIN แทน INNER JOIN เพื่อไม่ให้ booking หายถ้า equipment ถูกลบ
 $overdueStmt = $pdo->query("
-    SELECT b.id, b.end_datetime, u.student_id, e.name as item_name
-    FROM bookings b JOIN users u ON b.user_id = u.id JOIN equipments e ON b.item_id = e.id
+    SELECT b.id, b.end_datetime, u.student_id, COALESCE(e.name,'(ไม่ระบุ)') as item_name
+    FROM bookings b
+    LEFT JOIN users u ON b.user_id = u.id
+    LEFT JOIN equipments e ON b.item_id = e.id AND b.booking_type = 'equipment'
     WHERE b.booking_type = 'equipment' AND b.status = 'approved'
     ORDER BY b.end_datetime ASC
 ");
@@ -60,7 +66,7 @@ require_once __DIR__ . '/../includes/header.php';
     <p>ส่งอีเมลแจ้งเตือนและจัดการเคสเรียกด่วน</p>
 </div>
 
-<?php if($success):?><div class="alert alert-success"><i class="ph-bold ph-check-circle"></i> <?php echo $success;?></div><?php endif;?>
+<?php if($success):?><div class="alert alert-success"><i class="ph-bold ph-check-circle"></i> <?php echo htmlspecialchars($success);?></div><?php endif;?>
 <?php if($error):?><div class="alert alert-danger"><i class="ph-bold ph-warning-circle"></i> <?php echo htmlspecialchars($error);?></div><?php endif;?>
 
 <div class="grid-2">
@@ -93,12 +99,12 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="empty-state" style="padding:2rem;"><i class="ph ph-check-circle" style="color:var(--success);"></i><p class="text-muted">ไม่มีเคสที่ค้างอยู่</p></div>
         <?php else:?>
             <?php foreach($urgent_calls as $uc):?>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:.8rem;background:rgba(245,158,11,.05);border-radius:var(--radius-xs);margin-bottom:.6rem;border:1px solid rgba(245,158,11,.15);">
-                    <div>
-                        <div style="font-weight:600;font-size:.9rem;"><?php echo htmlspecialchars($uc['sender']);?> → <?php echo htmlspecialchars($uc['receiver']);?></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;padding:.8rem;background:rgba(245,158,11,.05);border-radius:var(--radius-xs);margin-bottom:.6rem;border:1px solid rgba(245,158,11,.15);">
+                    <div style="min-width:0;flex:1;">
+                        <div style="font-weight:600;font-size:.9rem;word-break:break-word;"><?php echo htmlspecialchars($uc['sender']);?> → <?php echo htmlspecialchars($uc['receiver']);?></div>
                         <div style="font-size:.78rem;color:var(--text-muted);"><i class="ph ph-clock"></i> <?php echo date('d M, H:i',strtotime($uc['created_at']));?></div>
                     </div>
-                    <form method="POST"><input type="hidden" name="call_id" value="<?php echo $uc['id'];?>">
+                    <form method="POST" style="flex-shrink:0;"><input type="hidden" name="call_id" value="<?php echo $uc['id'];?>">
                         <button name="resolve_call" class="btn btn-outline btn-sm">จัดการแล้ว</button></form>
                 </div>
             <?php endforeach;?>

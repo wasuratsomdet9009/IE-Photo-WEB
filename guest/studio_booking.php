@@ -8,8 +8,8 @@ require_once __DIR__ . '/../includes/email_templates.php';
 $error = '';
 $success = '';
 
-// Fetch available studios
-$stmt = $pdo->query("SELECT id, name FROM studios WHERE status = 'open'");
+// Fetch available studios — ใช้ 'available' ตรงกับ DB schema
+$stmt = $pdo->query("SELECT id, name FROM studios WHERE status = 'available' ORDER BY name ASC");
 $studios = $stmt->fetchAll();
 
 // Pre-fill from session if logged in
@@ -41,7 +41,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (strtotime($start_datetime) >= strtotime($end_datetime)) {
         $error = 'เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น';
     } else {
-        // FIX: Insert as 'pending' instead of 'approved' — requires admin approval
+        // ตรวจสอบ booking conflict ก่อน insert
+        $cStmt = $pdo->prepare("
+            SELECT id FROM bookings
+            WHERE item_id = ? AND booking_type = 'studio'
+              AND status IN ('pending','approved')
+              AND start_datetime < ? AND end_datetime > ?
+        ");
+        $cStmt->execute([$studio_id, $end_datetime, $start_datetime]);
+        if ($cStmt->fetch()) {
+            $error = 'สตูดิโอนี้ถูกจองในช่วงเวลาดังกล่าวแล้ว กรุณาเลือกเวลาอื่น';
+        }
+    }
+    if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST' && $studio_id > 0) {
         $user_id = $_SESSION['user_id'] ?? null;
         $insert = $pdo->prepare("INSERT INTO bookings (booking_type, item_id, user_id, guest_name, guest_email, usage_reason, usage_type, start_datetime, end_datetime, status)
                                  VALUES ('studio', ?, ?, ?, ?, ?, ?, ?, ?, 'pending')");
@@ -65,13 +77,13 @@ $base_url = '../';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div style="max-width:900px; margin:0 auto;">
+<div class="page-container">
     <div class="page-header">
         <h2>จองการใช้งานห้องสตูดิโอ</h2>
         <p>เลือกสตูดิโอและวันเวลาที่ต้องการด้านล่าง</p>
     </div>
 
-    <div class="grid-2">
+    <div class="studio-booking-grid">
         <!-- Studio Previews -->
         <div class="glass-card animate-in">
             <h3 style="font-size:1.1rem;margin-bottom:1.2rem;"><i class="ph-bold ph-images"></i> ตัวอย่างห้องสตูดิโอ</h3>
@@ -153,7 +165,18 @@ require_once __DIR__ . '/../includes/header.php';
                     <i class="ph-bold ph-calendar-check"></i> ส่งคำขอจอง
                 </button>
                 <p class="text-center mt-3">
-                    <a href="../index.html" style="font-size:.88rem;color:var(--text-muted);"><i class="ph ph-arrow-left"></i> กลับไปหน้าหลัก</a>
+                    <?php
+                        if (isset($_SESSION['user_id'])) {
+                            if ($_SESSION['role'] === 'admin') {
+                                $home = '../admin/dashboard.php';
+                            } else {
+                                $home = '../member/feed.php';
+                            }
+                        } else {
+                            $home = '../auth/login.php';
+                        }
+                    ?>
+                    <a href="<?php echo $home; ?>" style="font-size:.88rem;color:var(--text-muted);"><i class="ph ph-arrow-left"></i> กลับไปหน้าหลัก</a>
                 </p>
             </form>
         </div>
